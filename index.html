@@ -147,6 +147,20 @@
   .history-chip{ font-size:10.8px; padding:5px 10px; border-radius:14px; background:#fff; border:1px solid var(--line); color:var(--muted); }
   .history-chip.active{ background:var(--blue); color:#fff; border-color:var(--blue); }
 
+  .hist-list{ display:flex; flex-direction:column; gap:10px; }
+  .hist-item{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; cursor:pointer; transition:box-shadow .15s; }
+  .hist-item:hover{ box-shadow:0 4px 12px rgba(30,40,60,.08); }
+  .hist-item.active{ box-shadow:0 0 0 2px var(--blue) inset; }
+  .hist-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .hist-date{ font-size:12.5px; font-weight:700; color:var(--blue); }
+  .hist-meta{ font-size:10.5px; color:var(--muted); font-weight:400; margin-left:8px; }
+  .hist-actions{ display:flex; gap:6px; }
+  .hist-actions button{ font-size:11px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; font-weight:700; }
+  .hist-actions button.hist-edit{ color:var(--blue); }
+  .hist-actions button.hist-delete{ color:var(--red); border-color:#F0B8B8; }
+  .hist-preview{ font-size:12px; color:var(--muted); line-height:1.5; white-space:pre-wrap; max-height:54px; overflow:hidden; }
+  .hist-empty{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
+
   .card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
   .card h3{ font-size:12.5px; color:var(--blue); margin:0 0 10px; text-transform:uppercase; letter-spacing:.03em; }
   .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -306,6 +320,11 @@
           <button class="btn btn-outline" id="saveBtn">บันทึกรายงาน</button>
           <button class="btn btn-blue" id="exportBtn">ดาวน์โหลดเป็น PDF</button>
         </div>
+
+        <div class="card">
+          <h3>ประวัติรายงานทั้งหมด</h3>
+          <div class="hist-list" id="historyList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -443,6 +462,8 @@
   }
   async function listReportDatesApi(siteId){ return await apiGet({ action:'listReportDates', siteId }); }
   async function updateSiteApi(siteId, fields){ return await apiPost({ action:'updateSite', siteId, fields }); }
+  async function listReportsApi(siteId){ return await apiGet({ action:'listReports', siteId }); }
+  async function deleteReportApi(siteId, date){ return await apiPost({ action:'deleteReport', siteId, date }); }
 
   const STATUS_LABEL = { progress:'กำลังดำเนินการ', done:'เสร็จสิ้น', hold:'ระงับชั่วคราว' };
   const STATUS_CLASS = { progress:'progress', done:'done', hold:'hold' };
@@ -622,16 +643,77 @@
   async function refreshHistory(){
     const dates = await listReportDates(currentSiteId);
     historyRow.innerHTML = '';
-    if(dates.length===0){ historyRow.innerHTML = '<span class="hint-small">ยังไม่มีประวัติรายงานของไซต์นี้</span>'; return; }
-    dates.slice(0,14).forEach(d=>{
-      const chip = document.createElement('div');
-      chip.className = 'history-chip' + (d===currentDate?' active':'');
-      chip.textContent = toThaiDate(d);
-      chip.addEventListener('click', async ()=>{
-        currentDate = d; dateInput.value = d;
-        await loadIntoForm(); await refreshHistory();
+    if(dates.length===0){ historyRow.innerHTML = '<span class="hint-small">ยังไม่มีประวัติรายงานของไซต์นี้</span>'; }
+    else {
+      dates.slice(0,14).forEach(d=>{
+        const chip = document.createElement('div');
+        chip.className = 'history-chip' + (d===currentDate?' active':'');
+        chip.textContent = toThaiDate(d);
+        chip.addEventListener('click', async ()=>{
+          currentDate = d; dateInput.value = d;
+          await loadIntoForm(); await refreshHistory();
+        });
+        historyRow.appendChild(chip);
       });
-      historyRow.appendChild(chip);
+    }
+    await renderHistoryList();
+  }
+
+  const historyList = document.getElementById('historyList');
+  async function renderHistoryList(){
+    if(!historyList) return;
+    let rows = [];
+    try{ rows = await listReportsApi(currentSiteId); if(!Array.isArray(rows)) rows = []; }
+    catch(e){ historyList.innerHTML = `<div class="hist-empty">โหลดประวัติไม่สำเร็จ: ${escapeHtml(e.message)}</div>`; return; }
+
+    if(rows.length===0){
+      historyList.innerHTML = '<div class="hist-empty">ยังไม่มีรายงานสำหรับไซต์นี้ — กรอกฟอร์มด้านบนแล้วกด "บันทึกรายงาน"</div>';
+      return;
+    }
+    historyList.innerHTML = '';
+    rows.forEach(r=>{
+      const preview = (r.today||'').split('\n').filter(l=>l.trim())[0] || '— ไม่มีข้อมูลงานวันนี้ —';
+      const item = document.createElement('div');
+      item.className = 'hist-item' + (r.date===currentDate ? ' active' : '');
+      item.innerHTML = `
+        <div class="hist-top">
+          <div><span class="hist-date">${toThaiDate(r.date)}</span><span class="hist-meta">${r.photoCount||0} รูป · บันทึกล่าสุด ${r.savedAt ? new Date(Number(r.savedAt)).toLocaleString('th-TH') : '-'}</span></div>
+          <div class="hist-actions">
+            <button class="hist-edit" data-action="edit" data-date="${r.date}">แก้ไข</button>
+            <button class="hist-delete" data-action="delete" data-date="${r.date}">ลบ</button>
+          </div>
+        </div>
+        <div class="hist-preview">${escapeHtml(preview)}</div>
+      `;
+      item.addEventListener('click', async (ev)=>{
+        const btn = ev.target.closest('button[data-action]');
+        if(!btn){
+          currentDate = r.date; dateInput.value = r.date;
+          await loadIntoForm(); await refreshHistory();
+          return;
+        }
+        const action = btn.dataset.action;
+        const date = btn.dataset.date;
+        if(action==='edit'){
+          currentDate = date; dateInput.value = date;
+          await loadIntoForm(); await refreshHistory();
+        } else if(action==='delete'){
+          if(!confirm(`ยืนยันลบรายงานวันที่ ${toThaiDate(date)}? การลบไม่สามารถย้อนกลับได้ (รวมรูปภาพที่แนบไว้)`)) return;
+          btn.disabled = true; btn.textContent = 'กำลังลบ...';
+          try{
+            await deleteReportApi(currentSiteId, date);
+            if(date === currentDate){
+              document.getElementById('todayText').value = '';
+              document.getElementById('nextText').value = '';
+              currentPhotos = [];
+              buildSlots(10);
+              setStatus(`ลบรายงานวันที่ ${toThaiDate(date)} แล้ว`, true);
+            }
+            await refreshHistory();
+          }catch(e){ alert('ลบไม่สำเร็จ: ' + e.message); btn.disabled = false; btn.textContent = 'ลบ'; }
+        }
+      });
+      historyList.appendChild(item);
     });
   }
 
