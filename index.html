@@ -72,6 +72,21 @@
   .btn-blue:hover{ background:var(--blue-dark); }
   .btn-outline{ background:#fff; border:1px solid var(--line); color:var(--ink); }
 
+  .dash-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:16px 0 4px; }
+  .dash-card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .dash-card .dnum{ font-size:22px; font-weight:800; color:var(--ink); line-height:1.2; }
+  .dash-card .dlabel{ font-size:11px; color:var(--muted); margin-top:2px; font-weight:700; }
+  .dash-card.warn .dnum{ color:var(--amber); }
+  .dash-card.danger .dnum{ color:var(--red); }
+  .dash-card.good .dnum{ color:var(--green); }
+  .dash-card .dbar{ height:5px; border-radius:3px; background:var(--grey-bg); margin-top:8px; overflow:hidden; }
+  .dash-card .dbar-fill{ height:100%; background:var(--blue); border-radius:3px; }
+
+  .due-tag{ font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; white-space:nowrap; }
+  .due-tag.ok{ background:var(--grey-bg); color:var(--muted); }
+  .due-tag.soon{ background:var(--amber-bg); color:#8A5A16; }
+  .due-tag.late{ background:var(--red-bg); color:#8A1F1F; }
+
   .badges-row{ display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 18px; }
   .badge{
     display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
@@ -227,8 +242,13 @@
             <h2>Site Report — ไซต์งานที่เริ่มติดตั้งแล้ว</h2>
             <p>รวมทุกไซต์ที่เข้าสู่ขั้นตอนติดตั้งหน้างาน กดเข้าไปในแต่ละไซต์เพื่อกรอกรายงานความคืบหน้ารายวัน แนบรูป และออกรายงานเป็น PDF ส่งลูกค้าได้ทันที</p>
           </div>
-          <button class="btn btn-blue" id="newSiteBtn">+ เริ่มไซต์งานใหม่</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-outline" id="exportSummaryBtn">⬇ รายงานสรุปทุกไซต์ (PDF)</button>
+            <button class="btn btn-blue" id="newSiteBtn">+ เริ่มไซต์งานใหม่</button>
+          </div>
         </div>
+
+        <div class="dash-grid" id="dashGrid"></div>
 
         <div class="badges-row" id="badgesRow"></div>
 
@@ -246,6 +266,15 @@
           <div class="controls">
             <label>วันที่รายงาน</label>
             <input type="date" id="dateInput">
+          </div>
+        </div>
+
+        <div class="card" id="dueCard">
+          <h3>กำหนดส่งงาน</h3>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <input type="date" id="vDueDateInput" style="border:1px solid var(--line); border-radius:7px; padding:7px 9px; font-size:12.5px;">
+            <button class="btn btn-outline" id="saveDueDateBtn" style="padding:7px 12px;">บันทึกกำหนดส่ง</button>
+            <span id="dueTagDetail"></span>
           </div>
         </div>
 
@@ -295,6 +324,7 @@
           <option value="done">เสร็จสิ้น</option>
         </select>
       </div>
+      <div class="field"><label>กำหนดส่งงาน (ถ้ามี)</label><input type="date" id="mDueDate"></div>
       <div class="row">
         <button class="btn btn-outline" id="mCancel">ยกเลิก</button>
         <button class="btn btn-blue" id="mCreate">สร้างไซต์งาน</button>
@@ -412,9 +442,26 @@
     return await apiPost({ action:'saveReport', siteId, date, today:data.today, next:data.next, photos:data.photos, savedAt:data.savedAt });
   }
   async function listReportDatesApi(siteId){ return await apiGet({ action:'listReportDates', siteId }); }
+  async function updateSiteApi(siteId, fields){ return await apiPost({ action:'updateSite', siteId, fields }); }
 
   const STATUS_LABEL = { progress:'กำลังดำเนินการ', done:'เสร็จสิ้น', hold:'ระงับชั่วคราว' };
   const STATUS_CLASS = { progress:'progress', done:'done', hold:'hold' };
+
+  // ---------- deadline helpers ----------
+  function daysUntil(dueDate){
+    if(!dueDate) return null;
+    const today = new Date(todayISO()+'T00:00:00');
+    const due = new Date(dueDate+'T00:00:00');
+    return Math.round((due-today)/86400000);
+  }
+  function dueInfo(s){
+    if(!s.dueDate) return { label:'ไม่ได้กำหนด', cls:'ok', days:null };
+    const d = daysUntil(s.dueDate);
+    if(s.status==='done') return { label:toThaiDate(s.dueDate), cls:'ok', days:d };
+    if(d<0) return { label:`เกินกำหนด ${Math.abs(d)} วัน`, cls:'late', days:d };
+    if(d<=7) return { label:`เหลือ ${d} วัน`, cls:'soon', days:d };
+    return { label:toThaiDate(s.dueDate), cls:'ok', days:d };
+  }
 
   let sites = [];
   let currentSiteId = null;
@@ -459,6 +506,39 @@
       <div class="badge on-done"><span class="dot"></span>เสร็จสิ้น ${counts.done||0}</div>
       <div class="badge on-hold"><span class="dot"></span>ระงับชั่วคราว ${counts.hold||0}</div>
     `;
+    renderDashboard(counts);
+  }
+
+  function renderDashboard(counts){
+    const dashGrid = document.getElementById('dashGrid');
+    if(!dashGrid) return;
+    const total = counts.all;
+    const donePct = total ? Math.round((counts.done/total)*100) : 0;
+    let soonCount = 0, lateCount = 0;
+    sites.forEach(s=>{
+      if(s.status==='done' || !s.dueDate) return;
+      const d = daysUntil(s.dueDate);
+      if(d<0) lateCount++; else if(d<=7) soonCount++;
+    });
+    dashGrid.innerHTML = `
+      <div class="dash-card">
+        <div class="dnum">${total}</div>
+        <div class="dlabel">ไซต์งานทั้งหมด</div>
+      </div>
+      <div class="dash-card good">
+        <div class="dnum">${donePct}%</div>
+        <div class="dlabel">ความคืบหน้ารวม (เสร็จสิ้น ${counts.done||0}/${total})</div>
+        <div class="dbar"><div class="dbar-fill" style="width:${donePct}%;"></div></div>
+      </div>
+      <div class="dash-card warn">
+        <div class="dnum">${soonCount}</div>
+        <div class="dlabel">ใกล้ครบกำหนด (≤7 วัน)</div>
+      </div>
+      <div class="dash-card danger">
+        <div class="dnum">${lateCount}</div>
+        <div class="dlabel">เกินกำหนดส่งงาน</div>
+      </div>
+    `;
   }
 
   async function renderSiteGrid(){
@@ -477,6 +557,7 @@
         </div>
         <div class="meta-line"><span>ขนาดระบบ</span><b>${escapeHtml(s.size||'-')}</b></div>
         <div class="meta-line"><span>รายงานล่าสุด</span><b>${latest ? toThaiDate(latest) : 'ยังไม่มีรายงาน'}</b></div>
+        <div class="meta-line"><span>กำหนดส่ง</span><span class="due-tag ${dueInfo(s).cls}">${dueInfo(s).label}</span></div>
         <div class="open-btn">เปิด Site Report →</div>
       `;
       card.addEventListener('click', ()=> openSite(s.id));
@@ -507,9 +588,30 @@
     const s = sites.find(x=>x.id===id);
     document.getElementById('vTitle').textContent = s.name;
     document.getElementById('vSub').textContent = `${s.client} · ${s.size||''} · ${STATUS_LABEL[s.status]}`;
+    document.getElementById('vDueDateInput').value = s.dueDate || '';
+    const dInfoInit = dueInfo(s);
+    document.getElementById('dueTagDetail').innerHTML = `<span class="due-tag ${dInfoInit.cls}">${dInfoInit.label}</span>`;
     await refreshHistory();
     await loadIntoForm();
   }
+
+  document.getElementById('saveDueDateBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('saveDueDateBtn'); const original = btn.textContent;
+    const newDue = document.getElementById('vDueDateInput').value || '';
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    try{
+      await updateSiteApi(currentSiteId, { dueDate: newDue });
+      const s = sites.find(x=>x.id===currentSiteId);
+      if(s) s.dueDate = newDue;
+      const dInfoNew = dueInfo(s);
+      document.getElementById('dueTagDetail').innerHTML = `<span class="due-tag ${dInfoNew.cls}">${dInfoNew.label}</span>`;
+      renderDashboard({ all: sites.length,
+        progress: sites.filter(x=>x.status==='progress').length,
+        done: sites.filter(x=>x.status==='done').length,
+        hold: sites.filter(x=>x.status==='hold').length });
+    }catch(e){ alert('บันทึกกำหนดส่งไม่สำเร็จ: ' + e.message); }
+    finally{ btn.disabled = false; btn.textContent = original; }
+  });
   document.getElementById('backBtn').addEventListener('click', async ()=>{
     srDetail.style.display = 'none';
     srList.style.display = 'block';
@@ -662,11 +764,84 @@
     finally{ btn.textContent = original; btn.disabled = false; }
   });
 
+  document.getElementById('exportSummaryBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('exportSummaryBtn'); const original = btn.textContent;
+    btn.textContent = 'กำลังสร้างรายงาน...'; btn.disabled = true;
+    let wrap = null;
+    try{
+      const latestDates = {};
+      for(const s of sites){ latestDates[s.id] = await latestReportDate(s.id); }
+
+      const rowsHtml = sites.map(s=>{
+        const dInfo = dueInfo(s);
+        const latest = latestDates[s.id];
+        return `
+          <tr>
+            <td style="padding:8px 10px;border-bottom:1px solid #E3E6EC;">
+              <div style="font-weight:700;">${escapeHtml(s.name)}</div>
+              <div style="font-size:10.5px;color:#697384;">${escapeHtml(s.client||'-')}</div>
+            </td>
+            <td style="padding:8px 10px;border-bottom:1px solid #E3E6EC;"><span class="status-pill ${STATUS_CLASS[s.status]}">${STATUS_LABEL[s.status]}</span></td>
+            <td style="padding:8px 10px;border-bottom:1px solid #E3E6EC;">${s.dueDate ? toThaiDate(s.dueDate) : '-'}</td>
+            <td style="padding:8px 10px;border-bottom:1px solid #E3E6EC;"><span class="due-tag ${dInfo.cls}">${dInfo.days===null ? 'ไม่ได้กำหนด' : dInfo.label}</span></td>
+            <td style="padding:8px 10px;border-bottom:1px solid #E3E6EC;">${latest ? toThaiDate(latest) : 'ยังไม่มีรายงาน'}</td>
+          </tr>`;
+      }).join('');
+
+      wrap = document.createElement('div');
+      wrap.style.cssText = "position:fixed; left:-9999px; top:0; width:794px; background:#FDFCFA; padding:34px 36px; font-family:'Noto Sans Thai','Prompt','Segoe UI',sans-serif; color:#1D2433;";
+      wrap.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:2.5px solid #1F53C4; padding-bottom:12px; margin-bottom:16px;">
+          <div>
+            <div style="font-size:11px; color:#697384; letter-spacing:.06em; font-weight:700;">TEAM INSTALLATION &amp; MAINTENANCE SERVICE</div>
+            <div style="font-size:18px; font-weight:800;">รายงานสรุปภาพรวมทุกไซต์งาน — Site Report</div>
+          </div>
+          <div style="font-size:11px; color:#697384;">สร้างเมื่อ ${toThaiDate(todayISO())}</div>
+        </div>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr style="background:#2F6FED; color:#fff;">
+              <th style="padding:8px 10px; text-align:left;">ไซต์งาน / ลูกค้า</th>
+              <th style="padding:8px 10px; text-align:left;">สถานะ</th>
+              <th style="padding:8px 10px; text-align:left;">กำหนดส่ง</th>
+              <th style="padding:8px 10px; text-align:left;">คงเหลือ/เกิน</th>
+              <th style="padding:8px 10px; text-align:left;">รายงานล่าสุด</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml || `<tr><td colspan="5" style="padding:16px; text-align:center; color:#697384;">ยังไม่มีไซต์งานในระบบ</td></tr>`}</tbody>
+        </table>
+      `;
+      document.body.appendChild(wrap);
+
+      const canvas = await html2canvas(wrap, { scale:2, useCORS:true, backgroundColor:'#FDFCFA' });
+      const imgData = canvas.toDataURL('image/jpeg', .95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','mm','a4');
+      const pageWidth = 210, pageHeight = 297;
+      const imgH = (canvas.height * pageWidth) / canvas.width;
+      let heightLeft = imgH, position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgH);
+      heightLeft -= pageHeight;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgH);
+        heightLeft -= pageHeight;
+      }
+      pdf.save(`TS_Site_Summary_${todayISO().replace(/-/g,'')}.pdf`);
+    }catch(e){ alert('เกิดข้อผิดพลาดในการสร้างรายงานสรุป: ' + e.message); }
+    finally{
+      if(wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      btn.textContent = original; btn.disabled = false;
+    }
+  });
+
   // ---------- new site modal ----------
   const overlay = document.getElementById('modalOverlay');
   function openNewSiteModal(){
     document.getElementById('mName').value=''; document.getElementById('mClient').value='';
     document.getElementById('mSize').value=''; document.getElementById('mStatus').value='progress';
+    document.getElementById('mDueDate').value='';
     overlay.classList.add('show');
   }
   document.getElementById('newSiteBtn').addEventListener('click', openNewSiteModal);
@@ -676,11 +851,12 @@
     const client = document.getElementById('mClient').value.trim();
     const size = document.getElementById('mSize').value.trim();
     const status = document.getElementById('mStatus').value;
+    const dueDate = document.getElementById('mDueDate').value || '';
     if(!name){ alert('กรุณากรอกชื่อโครงการ/ไซต์'); return; }
     const btn = document.getElementById('mCreate');
     btn.disabled = true; btn.textContent = 'กำลังสร้าง...';
     try{
-      const s = { id: uid(), name, client: client||'-', size, status, createdAt: Date.now() };
+      const s = { id: uid(), name, client: client||'-', size, status, dueDate, createdAt: Date.now() };
       await createSiteApi(s);
       overlay.classList.remove('show');
       await loadSites();
