@@ -108,13 +108,18 @@
   #tePrintPage .tep-purpose-block{ margin:2px 0 6px 26px; }
   #tePrintPage .tep-row{ font-size:10.8px; line-height:1.45; margin-bottom:2px; }
   #tePrintPage .tep-row b{ font-weight:700; }
-  #tePrintPage table.tep-cost{ border:1px solid #000; margin-top:6px; }
-  #tePrintPage table.tep-cost th{ border:1px solid #000; font-size:11px; font-weight:700; padding:3px; background:#fff; }
-  #tePrintPage table.tep-cost td{ border:1px solid #000; font-size:11px; padding:3px 6px; text-align:center; }
-  #tePrintPage table.tep-cost td.tep-left{ text-align:left; }
-  #tePrintPage table.tep-cost td.tep-right{ text-align:right; }
-  #tePrintPage table.tep-cost tr.tep-total td{ font-weight:800; }
-  #tePrintPage .tep-textamt{ background:#BFBFBF; text-align:center; font-size:11px; padding:3px; border:1px solid #000; }
+  #tePrintPage .tep-cost{ border:1px solid #000; border-bottom:none; margin-top:6px; box-sizing:border-box; }
+  #tePrintPage .tep-cost-row{ display:flex; width:100%; border-bottom:1px solid #000; box-sizing:border-box; }
+  #tePrintPage .tep-cost .tcc{ box-sizing:border-box; border-right:1px solid #000; font-size:11px; font-weight:700; padding:3px; text-align:center; display:flex; align-items:center; justify-content:center; }
+  #tePrintPage .tep-cost-body .tcc{ font-weight:400; padding:3px 6px; }
+  #tePrintPage .tep-cost .tcc-last{ border-right:none; }
+  #tePrintPage .tep-cost .tcc-stack{ flex-direction:column; padding:0; align-items:stretch; }
+  #tePrintPage .tep-cost .tcc-sub{ flex:1; display:flex; align-items:center; padding:3px 6px; border-top:1px solid #000; box-sizing:border-box; }
+  #tePrintPage .tep-cost .tcc-stack .tcc-sub:first-child{ border-top:none; }
+  #tePrintPage .tep-cost .tep-left{ justify-content:flex-start; text-align:left; }
+  #tePrintPage .tep-cost .tep-right{ justify-content:flex-end; text-align:right; }
+  #tePrintPage .tep-cost-total .tcc{ font-weight:800; }
+  #tePrintPage .tep-textamt{ background:#BFBFBF; text-align:center; font-size:11px; padding:3px; border:1px solid #000; box-sizing:border-box; width:100%; }
   #tePrintPage .tep-photos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
   #tePrintPage .tep-photo-col{ display:flex; flex-direction:column; gap:8px; }
   #tePrintPage .tep-photo-box{ border:1px solid #000; height:225px; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:9px; color:#999; }
@@ -593,39 +598,37 @@
         <div class="tep-row"><b>ที่อยู่ :</b> <span id="tepAddress">—</span></div>
       </div>
 
-      <table class="tep-cost">
-        <tr>
-          <th style="width:12%;">วันที่</th>
-          <th style="width:22%;">เลขที่ไมล์ก่อนเดินทาง</th>
-          <th style="width:22%;">เลขที่ไมล์หลังเดินทาง</th>
-          <th style="width:22%;">ข้อมูลการเดินทาง</th>
-          <th style="width:22%;">รวมเบิกค่าน้ำมันเดินทาง</th>
-        </tr>
-        <tr>
-          <td rowspan="4" id="tepDate">—</td>
-          <td rowspan="4" style="vertical-align:top; color:#999;">Google Map</td>
-          <td rowspan="4" style="vertical-align:top; color:#999;">Google Map</td>
-          <td class="tep-left">ไป &nbsp;<span id="tepKmGo">0</span>&nbsp;กิโลเมตร</td>
-          <td class="tep-right"><span id="tepAmtGo">0</span>&nbsp;บาท</td>
-        </tr>
-        <tr>
-          <td class="tep-left">กลับ &nbsp;<span id="tepKmReturn">0</span>&nbsp;กิโลเมตร</td>
-          <td class="tep-right"><span id="tepAmtReturn">0</span>&nbsp;บาท</td>
-        </tr>
-        <tr>
-          <td class="tep-left">ทางด่วน &nbsp;<span id="tepToll">0</span>&nbsp;บาท</td>
-          <td class="tep-right"><span id="tepTollAmt">0</span>&nbsp;บาท</td>
-        </tr>
-        <tr>
-          <td class="tep-left">ค่าจอดรถ</td>
-          <td class="tep-right"><span id="tepParkingAmt">0</span>&nbsp;บาท</td>
-        </tr>
-        <tr class="tep-total">
-          <td colspan="3" class="tep-left" style="padding-left:8px;">รวมเบิกเบี้ยเลี้ยงค่าเดินทาง</td>
-          <td colspan="2" class="tep-right"><span id="tepTotal">0</span>&nbsp;บาท</td>
-        </tr>
-        <tr><td colspan="5" class="tep-textamt" id="tepTotalText">—</td></tr>
-      </table>
+      <div class="tep-cost">
+        <div class="tep-cost-row tep-cost-head">
+          <div class="tcc" style="width:12%;">วันที่</div>
+          <div class="tcc" style="width:22%;">เลขที่ไมล์ก่อนเดินทาง</div>
+          <div class="tcc" style="width:22%;">เลขที่ไมล์หลังเดินทาง</div>
+          <div class="tcc" style="width:22%;">ข้อมูลการเดินทาง</div>
+          <div class="tcc tcc-last" style="width:22%;">รวมเบิกค่าน้ำมันเดินทาง</div>
+        </div>
+        <div class="tep-cost-row tep-cost-body">
+          <div class="tcc" style="width:12%;" id="tepDate">—</div>
+          <div class="tcc" style="width:22%; color:#999;">Google Map</div>
+          <div class="tcc" style="width:22%; color:#999;">Google Map</div>
+          <div class="tcc tcc-stack" style="width:22%;">
+            <div class="tcc-sub tep-left">ไป &nbsp;<span id="tepKmGo">0</span>&nbsp;กิโลเมตร</div>
+            <div class="tcc-sub tep-left">กลับ &nbsp;<span id="tepKmReturn">0</span>&nbsp;กิโลเมตร</div>
+            <div class="tcc-sub tep-left">ทางด่วน &nbsp;<span id="tepToll">0</span>&nbsp;บาท</div>
+            <div class="tcc-sub tep-left">ค่าจอดรถ</div>
+          </div>
+          <div class="tcc tcc-stack tcc-last" style="width:22%;">
+            <div class="tcc-sub tep-right"><span id="tepAmtGo">0</span>&nbsp;บาท</div>
+            <div class="tcc-sub tep-right"><span id="tepAmtReturn">0</span>&nbsp;บาท</div>
+            <div class="tcc-sub tep-right"><span id="tepTollAmt">0</span>&nbsp;บาท</div>
+            <div class="tcc-sub tep-right"><span id="tepParkingAmt">0</span>&nbsp;บาท</div>
+          </div>
+        </div>
+        <div class="tep-cost-row tep-cost-total">
+          <div class="tcc tep-left" style="width:56%; padding-left:8px;">รวมเบิกเบี้ยเลี้ยงค่าเดินทาง</div>
+          <div class="tcc tep-right tcc-last" style="width:44%;"><span id="tepTotal">0</span>&nbsp;บาท</div>
+        </div>
+        <div class="tep-textamt" id="tepTotalText">—</div>
+      </div>
 
       <div class="tep-photos">
         <div class="tep-photo-col">
