@@ -127,12 +127,17 @@
   #tePreviewOverlay.show{ display:flex; }
   .te-preview-box{ background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.35); }
   .te-preview-toolbar{ display:flex; justify-content:flex-end; gap:8px; padding:10px 14px; background:#F3F5F9; border-bottom:1px solid var(--line); }
-  .te-preview-frame{ padding:16px; background:#DADEE5; display:flex; justify-content:center; }
+  .te-preview-frame{ padding:16px; background:#DADEE5; display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .te-preview-sheet{ box-shadow:0 6px 22px rgba(0,0,0,.28); line-height:0; }
   @media print{
     body *{ visibility:hidden; }
-    #tePrintPage, #tePrintPage *{ visibility:visible; }
-    #tePrintPage{ position:fixed; left:0; top:0; }
-    #tePrintRoot{ left:0 !important; }
+    #tePreviewFrame, #tePreviewFrame *{ visibility:visible; }
+    #tePreviewOverlay{ position:absolute; inset:auto; background:#fff; padding:0; display:block; }
+    .te-preview-box{ box-shadow:none; border-radius:0; }
+    .te-preview-toolbar{ display:none; }
+    #tePreviewFrame{ padding:0; background:#fff; gap:0; }
+    .te-preview-sheet{ box-shadow:none; page-break-after:always; }
+    .te-preview-sheet:last-child{ page-break-after:auto; }
   }
 
   /* Toll/parking receipts — edit view thumbnails */
@@ -145,9 +150,10 @@
   #teReceiptPrintRoot{ position:fixed; left:-9999px; top:0; }
   #teReceiptPrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:20px 22px; box-sizing:border-box; overflow:hidden; }
   .terp-title{ font-size:13px; font-weight:700; margin-bottom:14px; }
-  .terp-grid{ display:flex; gap:10px; align-items:flex-start; }
-  .terp-box{ flex:0 0 auto; width:calc((100% - 40px)/5); height:950px; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .terp-box img{ max-width:100%; max-height:100%; object-fit:contain; }
+  .terp-grid{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; height:970px; }
+  .terp-row{ display:flex; gap:14px; }
+  .terp-box{ flex:0 0 auto; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .terp-box img{ width:100%; height:100%; object-fit:contain; }
 
   /* ---- Level 2 sub-tabs (new: nested under Project) ---- */
   .l2-wrap{
@@ -1749,19 +1755,85 @@
     return { emp, dateVal };
   }
 
+  // Load an image to get its natural pixel size (so we can tell portrait vs landscape).
+  function teLoadImgDims(src){
+    return new Promise(resolve=>{
+      const img = new Image();
+      img.onload = ()=> resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+      img.onerror = ()=> resolve({ w: 1, h: 1 });
+      img.src = src;
+    });
+  }
+
+  // Lay out a batch of receipt images into gridEl, respecting each image's own
+  // orientation (portrait images placed tall/narrow, landscape images placed
+  // wide/short) — a simple justified-row packer, scaled to fit one page.
+  async function teLayoutReceiptGrid(gridEl, batch){
+    gridEl.innerHTML = '';
+    if(!batch.length) return;
+    const CW = 750, CH = 970, GAP = 14;
+    const dims = await Promise.all(batch.map(teLoadImgDims));
+    const aspects = dims.map(d => Math.max(0.25, Math.min(4, d.w / d.h)));
+
+    const nominalH = CH / Math.ceil(Math.sqrt(batch.length));
+    const rows = []; let cur = []; let curW = 0;
+    aspects.forEach((a, i)=>{
+      const w = a * nominalH;
+      const extra = cur.length ? GAP + w : w;
+      if(cur.length && curW + extra > CW){ rows.push(cur); cur = []; curW = 0; }
+      const extra2 = cur.length ? GAP + w : w;
+      cur.push(i); curW += extra2;
+    });
+    if(cur.length) rows.push(cur);
+
+    let rowHeights = rows.map(r=>{
+      const sumA = r.reduce((s,i)=>s+aspects[i],0);
+      const gaps = (r.length-1)*GAP;
+      return (CW - gaps) / sumA;
+    });
+    const total = rowHeights.reduce((s,h)=>s+h,0) + Math.max(0, rows.length-1)*GAP;
+    if(total > CH){
+      const scale = CH / total;
+      rowHeights = rowHeights.map(h=>h*scale);
+    }
+
+    rows.forEach((r, ri)=>{
+      const rowH = rowHeights[ri];
+      const rowEl = document.createElement('div');
+      rowEl.className = 'terp-row';
+      rowEl.style.height = rowH + 'px';
+      r.forEach(i=>{
+        const box = document.createElement('div');
+        box.className = 'terp-box';
+        box.style.width = (aspects[i]*rowH) + 'px';
+        box.style.height = rowH + 'px';
+        box.innerHTML = `<img src="${batch[i]}">`;
+        rowEl.appendChild(box);
+      });
+      gridEl.appendChild(rowEl);
+    });
+  }
+
   async function teRenderReceiptPage(batch, pageNum){
     const grid = document.getElementById('teReceiptPrintGrid');
-    grid.innerHTML = '';
-    batch.forEach(src=>{
-      const box = document.createElement('div');
-      box.className = 'terp-box';
-      box.innerHTML = `<img src="${src}">`;
-      grid.appendChild(box);
-    });
+    await teLayoutReceiptGrid(grid, batch);
     document.getElementById('teReceiptPageNum').textContent = pageNum;
     const page = document.getElementById('teReceiptPrintPage');
     const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
     return canvas;
+  }
+
+  // Build a standalone, populated clone of the receipt page template for on-screen
+  // preview (no canvas capture needed — it's shown as live HTML).
+  async function teBuildReceiptPreviewSheet(batch, pageNum){
+    const clone = document.getElementById('teReceiptPrintPage').cloneNode(true);
+    clone.removeAttribute('id');
+    const pnEl = clone.querySelector('#teReceiptPageNum');
+    if(pnEl){ pnEl.removeAttribute('id'); pnEl.textContent = pageNum; }
+    const gridEl = clone.querySelector('#teReceiptPrintGrid');
+    gridEl.removeAttribute('id');
+    await teLayoutReceiptGrid(gridEl, batch);
+    return clone;
   }
 
   document.getElementById('teExportBtn').addEventListener('click', async ()=>{
@@ -1798,13 +1870,38 @@
     finally{ btn.textContent = original; btn.disabled = false; }
   });
 
-  document.getElementById('tePreviewBtn').addEventListener('click', ()=>{
-    tePopulatePrintPage();
-    document.getElementById('tePreviewFrame').appendChild(document.getElementById('tePrintPage'));
-    document.getElementById('tePreviewOverlay').classList.add('show');
+  document.getElementById('tePreviewBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('tePreviewBtn'); const original = btn.textContent;
+    btn.textContent = 'กำลังเตรียมตัวอย่าง...'; btn.disabled = true;
+    try{
+      tePopulatePrintPage();
+      const frame = document.getElementById('tePreviewFrame');
+      frame.innerHTML = '';
+
+      const sheet1 = document.createElement('div');
+      sheet1.className = 'te-preview-sheet';
+      sheet1.appendChild(document.getElementById('tePrintPage'));
+      frame.appendChild(sheet1);
+
+      if(teTollReceipts.length){
+        const batches = [];
+        for(let i=0;i<teTollReceipts.length;i+=5) batches.push(teTollReceipts.slice(i,i+5));
+        for(let b=0;b<batches.length;b++){
+          const sheet = await teBuildReceiptPreviewSheet(batches[b], b+2);
+          const wrap = document.createElement('div');
+          wrap.className = 'te-preview-sheet';
+          wrap.appendChild(sheet);
+          frame.appendChild(wrap);
+        }
+      }
+      document.getElementById('tePreviewOverlay').classList.add('show');
+    } finally {
+      btn.textContent = original; btn.disabled = false;
+    }
   });
   document.getElementById('tePreviewCloseBtn').addEventListener('click', ()=>{
     document.getElementById('tePrintRoot').appendChild(document.getElementById('tePrintPage'));
+    document.getElementById('tePreviewFrame').innerHTML = '';
     document.getElementById('tePreviewOverlay').classList.remove('show');
   });
   document.getElementById('tePreviewPrintBtn').addEventListener('click', ()=>{ window.print(); });
