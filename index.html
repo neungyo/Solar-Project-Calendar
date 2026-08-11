@@ -155,8 +155,9 @@
   #teReceiptPrintRoot{ position:fixed; left:-9999px; top:0; }
   #teReceiptPrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:20px 22px; box-sizing:border-box; overflow:hidden; }
   .terp-title{ font-size:13px; font-weight:700; margin-bottom:14px; }
-  .terp-grid{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; height:970px; }
-  .terp-row{ display:flex; gap:14px; }
+  .terp-grid{ display:flex; align-items:center; justify-content:center; height:970px; }
+  .terp-portrait-row{ display:flex; gap:14px; align-items:center; justify-content:center; height:100%; }
+  .terp-landscape-col{ display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; height:100%; }
   .terp-box{ flex:0 0 auto; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .terp-box img{ width:100%; height:100%; object-fit:contain; }
 
@@ -1768,58 +1769,65 @@
     });
   }
 
-  // Lay out a batch of receipt images into gridEl, respecting each image's own
-  // orientation (portrait images placed tall/narrow, landscape images placed
-  // wide/short) — a simple justified-row packer, scaled to fit one page.
-  async function teLayoutReceiptGrid(gridEl, batch){
+  // Lay out a page of same-orientation receipt images into gridEl.
+  // Portrait pages: up to 2 bills side by side, large. Landscape pages: up to
+  // 5 bills stacked full-width down the page, with left/right margins.
+  async function teLayoutReceiptGrid(gridEl, batch, type){
     gridEl.innerHTML = '';
     if(!batch.length) return;
-    const CW = 750, CH = 970, GAP = 14;
-    const dims = await Promise.all(batch.map(teLoadImgDims));
-    const aspects = dims.map(d => Math.max(0.25, Math.min(4, d.w / d.h)));
-
-    const nominalH = CH / Math.ceil(Math.sqrt(batch.length));
-    const rows = []; let cur = []; let curW = 0;
-    aspects.forEach((a, i)=>{
-      const w = a * nominalH;
-      const extra = cur.length ? GAP + w : w;
-      if(cur.length && curW + extra > CW){ rows.push(cur); cur = []; curW = 0; }
-      const extra2 = cur.length ? GAP + w : w;
-      cur.push(i); curW += extra2;
-    });
-    if(cur.length) rows.push(cur);
-
-    let rowHeights = rows.map(r=>{
-      const sumA = r.reduce((s,i)=>s+aspects[i],0);
-      const gaps = (r.length-1)*GAP;
-      return (CW - gaps) / sumA;
-    });
-    const total = rowHeights.reduce((s,h)=>s+h,0) + Math.max(0, rows.length-1)*GAP;
-    if(total > CH){
-      const scale = CH / total;
-      rowHeights = rowHeights.map(h=>h*scale);
-    }
-
-    rows.forEach((r, ri)=>{
-      const rowH = rowHeights[ri];
-      const rowEl = document.createElement('div');
-      rowEl.className = 'terp-row';
-      rowEl.style.height = rowH + 'px';
-      r.forEach(i=>{
+    const CH = 970;
+    if(type === 'portrait'){
+      const GAP = 20;
+      const boxW = batch.length >= 2 ? 355 : 480;
+      const row = document.createElement('div');
+      row.className = 'terp-portrait-row';
+      row.style.gap = GAP + 'px';
+      batch.forEach(src=>{
         const box = document.createElement('div');
         box.className = 'terp-box';
-        box.style.width = (aspects[i]*rowH) + 'px';
-        box.style.height = rowH + 'px';
-        box.innerHTML = `<img src="${batch[i]}">`;
-        rowEl.appendChild(box);
+        box.style.width = boxW + 'px';
+        box.style.height = CH + 'px';
+        box.innerHTML = `<img src="${src}">`;
+        row.appendChild(box);
       });
-      gridEl.appendChild(rowEl);
-    });
+      gridEl.appendChild(row);
+    } else {
+      const CW = 700, GAP = 14;
+      const boxH = (CH - GAP*(batch.length-1)) / batch.length;
+      const col = document.createElement('div');
+      col.className = 'terp-landscape-col';
+      col.style.gap = GAP + 'px';
+      batch.forEach(src=>{
+        const box = document.createElement('div');
+        box.className = 'terp-box';
+        box.style.width = CW + 'px';
+        box.style.height = boxH + 'px';
+        box.innerHTML = `<img src="${src}">`;
+        col.appendChild(box);
+      });
+      gridEl.appendChild(col);
+    }
   }
 
-  async function teRenderReceiptPage(batch, pageNum){
+  // Classify all receipts by orientation, then paginate: portrait bills 2-per-page
+  // (paired together), landscape bills 5-per-page (stacked together). Returns an
+  // ordered list of { type, items } pages — portrait pages first, then landscape.
+  async function teClassifyAndPaginateReceipts(list){
+    const dims = await Promise.all(list.map(teLoadImgDims));
+    const portraits = [], landscapes = [];
+    list.forEach((src,i)=>{
+      const d = dims[i];
+      (d.h >= d.w ? portraits : landscapes).push(src);
+    });
+    const pages = [];
+    for(let i=0;i<portraits.length;i+=2) pages.push({ type:'portrait', items: portraits.slice(i,i+2) });
+    for(let i=0;i<landscapes.length;i+=5) pages.push({ type:'landscape', items: landscapes.slice(i,i+5) });
+    return pages;
+  }
+
+  async function teRenderReceiptPage(batch, pageNum, type){
     const grid = document.getElementById('teReceiptPrintGrid');
-    await teLayoutReceiptGrid(grid, batch);
+    await teLayoutReceiptGrid(grid, batch, type);
     document.getElementById('teReceiptPageNum').textContent = pageNum;
     const page = document.getElementById('teReceiptPrintPage');
     const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
@@ -1828,14 +1836,14 @@
 
   // Build a standalone, populated clone of the receipt page template for on-screen
   // preview (no canvas capture needed — it's shown as live HTML).
-  async function teBuildReceiptPreviewSheet(batch, pageNum){
+  async function teBuildReceiptPreviewSheet(batch, pageNum, type){
     const clone = document.getElementById('teReceiptPrintPage').cloneNode(true);
     clone.removeAttribute('id');
     const pnEl = clone.querySelector('#teReceiptPageNum');
     if(pnEl){ pnEl.removeAttribute('id'); pnEl.textContent = pageNum; }
     const gridEl = clone.querySelector('#teReceiptPrintGrid');
     gridEl.removeAttribute('id');
-    await teLayoutReceiptGrid(gridEl, batch);
+    await teLayoutReceiptGrid(gridEl, batch, type);
     return clone;
   }
 
@@ -1854,13 +1862,13 @@
       // Page 1: the main form — sized/compacted to fit exactly one A4 page.
       pdf.addImage(imgData,'JPEG',0,0,pageWidth,Math.min(imgH,pageHeight));
 
-      // Page 2+: toll/parking receipts, up to 5 per page laid out horizontally.
-      // Any receipts beyond 5 automatically flow onto additional pages.
+      // Page 2+: toll/parking receipts — portrait bills paired 2-per-page,
+      // landscape bills stacked 5-per-page. Overflow automatically flows onto
+      // additional pages.
       if(teTollReceipts.length){
-        const batches = [];
-        for(let i=0;i<teTollReceipts.length;i+=5) batches.push(teTollReceipts.slice(i,i+5));
-        for(let b=0;b<batches.length;b++){
-          const rCanvas = await teRenderReceiptPage(batches[b], b+2);
+        const pages = await teClassifyAndPaginateReceipts(teTollReceipts);
+        for(let p=0;p<pages.length;p++){
+          const rCanvas = await teRenderReceiptPage(pages[p].items, p+2, pages[p].type);
           const rImgData = rCanvas.toDataURL('image/jpeg', .95);
           const rImgH = (rCanvas.height*pageWidth)/rCanvas.width;
           pdf.addPage();
@@ -1887,10 +1895,9 @@
       frame.appendChild(sheet1);
 
       if(teTollReceipts.length){
-        const batches = [];
-        for(let i=0;i<teTollReceipts.length;i+=5) batches.push(teTollReceipts.slice(i,i+5));
-        for(let b=0;b<batches.length;b++){
-          const sheet = await teBuildReceiptPreviewSheet(batches[b], b+2);
+        const pages = await teClassifyAndPaginateReceipts(teTollReceipts);
+        for(let p=0;p<pages.length;p++){
+          const sheet = await teBuildReceiptPreviewSheet(pages[p].items, p+2, pages[p].type);
           const wrap = document.createElement('div');
           wrap.className = 'te-preview-sheet';
           wrap.appendChild(sheet);
