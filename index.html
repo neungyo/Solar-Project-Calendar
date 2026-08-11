@@ -135,6 +135,20 @@
     #tePrintRoot{ left:0 !important; }
   }
 
+  /* Toll/parking receipts — edit view thumbnails */
+  .te-receipt-grid{ display:flex; flex-wrap:wrap; gap:10px; }
+  .te-receipt-thumb{ position:relative; width:90px; height:120px; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#F4F5F7; }
+  .te-receipt-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .te-receipt-thumb .te-remove{ position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+  /* Toll/parking receipts — hidden print page (batches of up to 5, one page each) */
+  #teReceiptPrintRoot{ position:fixed; left:-9999px; top:0; }
+  #teReceiptPrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:20px 22px; box-sizing:border-box; overflow:hidden; }
+  .terp-title{ font-size:13px; font-weight:700; margin-bottom:14px; }
+  .terp-grid{ display:flex; gap:10px; align-items:flex-start; }
+  .terp-box{ flex:0 0 auto; width:calc((100% - 40px)/5); height:950px; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .terp-box img{ max-width:100%; max-height:100%; object-fit:contain; }
+
   /* ---- Level 2 sub-tabs (new: nested under Project) ---- */
   .l2-wrap{
     background:var(--card); border:1px solid var(--line); border-radius:14px;
@@ -523,6 +537,13 @@
           </div>
         </div>
 
+        <div class="card">
+          <h3>บิลค่าทางด่วน / ค่าที่จอดรถ</h3>
+          <p class="te-card-title" style="margin:-4px 0 10px;">แนบได้หลายใบ — ในเอกสาร PDF จะแสดงในหน้าถัดไปต่อจากหน้าแรกเสมอ สูงสุด 5 ใบต่อหน้า ถ้าเกิน 5 ใบจะขึ้นหน้าใหม่ให้อัตโนมัติ</p>
+          <div class="te-receipt-grid" id="teReceiptGrid"></div>
+          <button class="btn btn-outline" id="teAddReceiptBtn" style="margin-top:10px;">+ เพิ่มรูปบิล</button>
+        </div>
+
         <div class="action-row">
           <button class="btn btn-outline" id="teDeleteBtn" style="color:var(--red); border-color:#F0B8B8; margin-right:auto;">ลบเอกสาร</button>
           <button class="btn btn-outline" id="teSaveBtn">บันทึก</button>
@@ -619,6 +640,15 @@
         <div>&nbsp;-4.ให้ทำเอกสารเบิก 1 เอกสารต่อ 1 รอบการเดินทางเท่านั้น</div>
         <div>&nbsp;-5.ต้องมีรายงานบนระบบรายงาน Dealer Info &amp; Customer Site Visit ประกอบด้วยเท่านั้น</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Hidden print template for toll/parking receipt pages — one of these is rendered
+       per batch of up to 5 receipts, and appended as extra PDF pages after the main form. -->
+  <div id="teReceiptPrintRoot">
+    <div id="teReceiptPrintPage">
+      <div class="terp-title">เอกสารแนบ — บิลค่าทางด่วน / ค่าที่จอดรถ (หน้า <span id="teReceiptPageNum">2</span>)</div>
+      <div class="terp-grid" id="teReceiptPrintGrid"></div>
     </div>
   </div>
 
@@ -1457,6 +1487,35 @@
     }
   }
 
+  // ---------- toll/parking receipts (variable-length list) ----------
+  let teTollReceipts = [];
+  function teRenderReceipts(){
+    const grid = document.getElementById('teReceiptGrid');
+    grid.innerHTML = '';
+    teTollReceipts.forEach((src, i)=>{
+      const thumb = document.createElement('div');
+      thumb.className = 'te-receipt-thumb';
+      thumb.innerHTML = `<img src="${src}"><div class="te-remove" data-idx="${i}">✕</div>`;
+      thumb.querySelector('.te-remove').addEventListener('click', ()=>{
+        teTollReceipts.splice(i,1); teRenderReceipts();
+      });
+      grid.appendChild(thumb);
+    });
+  }
+  document.getElementById('teAddReceiptBtn').addEventListener('click', ()=>{
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.multiple = true; input.style.display = 'none';
+    input.addEventListener('change', async ()=>{
+      for(const file of Array.from(input.files)){
+        const dataUrl = await teCompressImage(file, 1600, .82);
+        teTollReceipts.push(dataUrl);
+      }
+      teRenderReceipts();
+    });
+    document.body.appendChild(input); input.click();
+    setTimeout(()=>document.body.removeChild(input), 3000);
+  });
+
   function teCompute(){
     const rate = Number(document.getElementById('teRate').value) || 0;
     const kmGo = Number(document.getElementById('teKmGo').value) || 0;
@@ -1504,6 +1563,8 @@
       };
       tePhotosChanged = new Set();
       TE_PHOTO_SLOTS.forEach(teRenderPhotoSlot);
+      teTollReceipts = Array.isArray(t.tollReceipts) ? t.tollReceipts.slice() : [];
+      teRenderReceipts();
       document.getElementById('teDeleteBtn').style.display = '';
     } else {
       teCurrentId = uid();
@@ -1518,6 +1579,8 @@
       document.getElementById('teToll').value = '';
       document.getElementById('teParking').value = '';
       teResetPhotoSlots();
+      teTollReceipts = [];
+      teRenderReceipts();
       document.getElementById('teDeleteBtn').style.display = 'none';
     }
     teUpdateEmployeeInfo();
@@ -1551,6 +1614,7 @@
     TE_PHOTO_SLOTS.forEach(slot=>{
       expense[slot] = tePhotosChanged.has(slot) ? (tePhotos[slot] || '') : 'KEEP';
     });
+    expense.tollReceipts = teTollReceipts.slice();
     return expense;
   }
 
@@ -1685,6 +1749,21 @@
     return { emp, dateVal };
   }
 
+  async function teRenderReceiptPage(batch, pageNum){
+    const grid = document.getElementById('teReceiptPrintGrid');
+    grid.innerHTML = '';
+    batch.forEach(src=>{
+      const box = document.createElement('div');
+      box.className = 'terp-box';
+      box.innerHTML = `<img src="${src}">`;
+      grid.appendChild(box);
+    });
+    document.getElementById('teReceiptPageNum').textContent = pageNum;
+    const page = document.getElementById('teReceiptPrintPage');
+    const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+    return canvas;
+  }
+
   document.getElementById('teExportBtn').addEventListener('click', async ()=>{
     const btn = document.getElementById('teExportBtn'); const original = btn.textContent;
     btn.textContent = 'กำลังสร้าง PDF...'; btn.disabled = true;
@@ -1697,8 +1776,23 @@
       const pdf = new jsPDF('p','mm','a4');
       const pageWidth=210, pageHeight=297;
       const imgH = (canvas.height*pageWidth)/canvas.width;
-      // Single page only — the print template is sized/compacted to fit one A4 page.
+      // Page 1: the main form — sized/compacted to fit exactly one A4 page.
       pdf.addImage(imgData,'JPEG',0,0,pageWidth,Math.min(imgH,pageHeight));
+
+      // Page 2+: toll/parking receipts, up to 5 per page laid out horizontally.
+      // Any receipts beyond 5 automatically flow onto additional pages.
+      if(teTollReceipts.length){
+        const batches = [];
+        for(let i=0;i<teTollReceipts.length;i+=5) batches.push(teTollReceipts.slice(i,i+5));
+        for(let b=0;b<batches.length;b++){
+          const rCanvas = await teRenderReceiptPage(batches[b], b+2);
+          const rImgData = rCanvas.toDataURL('image/jpeg', .95);
+          const rImgH = (rCanvas.height*pageWidth)/rCanvas.width;
+          pdf.addPage();
+          pdf.addImage(rImgData,'JPEG',0,0,pageWidth,Math.min(rImgH,pageHeight));
+        }
+      }
+
       pdf.save(`TravelExpense_${dateVal.replace(/-/g,'')}_${slugify(emp.name)}.pdf`);
     }catch(e){ alert('เกิดข้อผิดพลาดในการสร้าง PDF: '+e.message); }
     finally{ btn.textContent = original; btn.disabled = false; }
