@@ -1872,7 +1872,13 @@
         }
       }
 
-      pdf.save(`TravelExpense_${dateVal.replace(/-/g,'')}_${slugify(emp.name)}.pdf`);
+      const jobNoVal = document.getElementById('teJobNo').value.trim();
+      const companyVal = document.getElementById('teCompany').value.trim();
+      let fileName = dateVal.replace(/-/g,'');
+      if(jobNoVal) fileName += '_' + slugify(jobNoVal);
+      if(companyVal) fileName += '_' + slugify(companyVal);
+      if(!jobNoVal && !companyVal) fileName += '_' + slugify(emp.name);
+      pdf.save(`${fileName}.pdf`);
     }catch(e){ alert('เกิดข้อผิดพลาดในการสร้าง PDF: '+e.message); }
     finally{ btn.textContent = original; btn.disabled = false; }
   });
