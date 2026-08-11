@@ -53,6 +53,74 @@
   .app-header .app-eyebrow{ font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.06em; }
   .app-header h1{ margin:2px 0 0; font-size:20px; color:var(--ink); font-weight:800; }
 
+  .top-tabs{ display:flex; gap:6px; margin-bottom:18px; border-bottom:2px solid var(--line); }
+  .top-tab{ border:none; background:none; padding:10px 16px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-2px; }
+  .top-tab:hover{ color:var(--ink); }
+  .top-tab.active{ color:var(--blue); border-bottom-color:var(--blue); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .placeholder-card{ text-align:center; color:var(--muted); padding:50px 20px; }
+  .placeholder-card .picon{ font-size:32px; margin-bottom:10px; }
+  .placeholder-card h3{ color:var(--ink); font-size:15px; margin:0 0 8px; }
+  .placeholder-card p{ font-size:12.5px; line-height:1.7; max-width:480px; margin:0 auto; }
+
+  /* ===== Travel Expense (ค่าเดินทาง) ===== */
+  .te-cost-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .te-cost-table td{ border-bottom:1px dashed var(--line); padding:8px 6px; vertical-align:middle; }
+  .te-cost-table td:first-child{ width:38%; color:var(--muted); font-weight:600; }
+  .te-cost-table td:nth-child(2){ width:26%; }
+  .te-cost-table td.te-amt{ text-align:right; font-weight:700; width:22%; }
+  .te-cost-table input[type=number]{ width:100%; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:12.5px; font-family:inherit; }
+  .te-cost-table .te-total-row td{ border-top:2px solid var(--ink); border-bottom:none; font-weight:800; padding-top:10px; }
+  .te-cost-table .te-total-row td.te-amt{ color:var(--red); font-size:14px; }
+
+  .te-photo-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+  .te-photo-col{ display:flex; flex-direction:column; gap:6px; }
+  .te-photo-label{ font-size:11px; font-weight:700; color:var(--muted); }
+  .te-photo-slot{ aspect-ratio:4/3; border:1.4px dashed #A9B1BE; border-radius:8px; background:#F4F5F7; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+  .te-photo-slot img{ width:100%; height:100%; object-fit:cover; }
+  .te-photo-slot .te-empty{ font-size:11px; color:#9AA1AC; text-align:center; padding:8px; }
+  .te-photo-slot .te-remove{ position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .te-photo-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .te-photo-actions button{ flex:1; font-size:10.8px; padding:6px 6px; }
+
+  .te-card-title{ font-size:12.5px; color:var(--muted); }
+  .te-card-title b{ color:var(--ink); }
+
+  /* Print/export replica of the official "แบบขออนุมัติเบิกค่าเดินทาง" template */
+  #tePrintRoot{ position:fixed; left:-9999px; top:0; }
+  #tePrintPage{ width:794px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:14px 18px; }
+  #tePrintPage table{ border-collapse:collapse; width:100%; table-layout:fixed; }
+  #tePrintPage .tep-header{ display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+  #tePrintPage .tep-header img{ height:52px; width:auto; }
+  #tePrintPage .tep-header .tep-co{ font-size:20px; }
+  #tePrintPage .tep-header .tep-title{ font-size:16px; text-align:center; flex:1; }
+  #tePrintPage .tep-info td{ font-size:10.7px; padding:3px 4px; vertical-align:bottom; border:none; }
+  #tePrintPage .tep-info td.lbl{ font-weight:700; white-space:nowrap; }
+  #tePrintPage .tep-info td.val{ border-bottom:1px solid #000; }
+  #tePrintPage .tep-red{ color:#FF0000; }
+  #tePrintPage .tep-blue{ color:#002060; }
+  #tePrintPage .tep-yellow{ color:#B8860B; }
+  #tePrintPage .tep-small6{ font-size:8px; }
+  #tePrintPage .tep-intent{ font-weight:700; font-size:10.7px; margin:8px 0 6px; }
+  #tePrintPage .tep-purpose td{ font-size:13px; border:none; padding:2px 4px; }
+  #tePrintPage .tep-purpose td.lbl{ font-size:10.7px; font-weight:700; vertical-align:top; white-space:nowrap; }
+  #tePrintPage table.tep-cost{ border:1px solid #000; margin-top:8px; }
+  #tePrintPage table.tep-cost th{ border:1px solid #000; font-size:13px; font-weight:700; padding:4px; background:#fff; }
+  #tePrintPage table.tep-cost td{ border:1px solid #000; font-size:13px; padding:4px 6px; text-align:center; }
+  #tePrintPage table.tep-cost td.tep-left{ text-align:left; }
+  #tePrintPage table.tep-cost td.tep-right{ text-align:right; }
+  #tePrintPage table.tep-cost tr.tep-total td{ font-weight:800; color:#FF0000; }
+  #tePrintPage .tep-textamt{ background:#BFBFBF; text-align:center; font-size:13px; padding:4px; border:1px solid #000; }
+  #tePrintPage .tep-photos{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+  #tePrintPage .tep-photo-col{ display:flex; flex-direction:column; gap:8px; }
+  #tePrintPage .tep-photo-box{ border:1px solid #000; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:10px; color:#999; }
+  #tePrintPage .tep-photo-box img{ width:100%; height:100%; object-fit:cover; }
+  #tePrintPage .tep-footer{ margin-top:12px; }
+  #tePrintPage .tep-footer div{ color:#FF0000; font-size:9px; line-height:1.6; }
+
   /* ---- Level 2 sub-tabs (new: nested under Project) ---- */
   .l2-wrap{
     background:var(--card); border:1px solid var(--line); border-radius:14px;
@@ -244,7 +312,12 @@
       </div>
     </div>
 
-    <div class="l2-wrap">
+    <div class="top-tabs" id="topTabs">
+      <button class="top-tab active" data-tab="siteReport">Site Report</button>
+      <button class="top-tab" data-tab="travelExpense">ค่าเดินทาง</button>
+    </div>
+
+    <div class="l2-wrap tab-panel active" id="tabSiteReport">
       <div class="l2-head">
         <span class="crumb"><b>Site Report</b> — ไซต์งานที่เริ่มติดตั้งแล้วของแผนก</span>
       </div>
@@ -325,6 +398,209 @@
           <h3>ประวัติรายงานทั้งหมด</h3>
           <div class="hist-list" id="historyList"></div>
         </div>
+      </div>
+    </div>
+
+    <div class="l2-wrap tab-panel" id="tabTravelExpense">
+      <div class="l2-head">
+        <span class="crumb"><b>ค่าเดินทาง</b> — บันทึกค่าใช้จ่ายในการเดินทางไปแต่ละไซต์งาน</span>
+      </div>
+
+      <!-- ===================== TRAVEL EXPENSE LIST ===================== -->
+      <div id="teList">
+        <div class="sr-head">
+          <div>
+            <h2>ค่าเดินทาง — รายการเบิกค่าเดินทาง</h2>
+            <p>บันทึกค่าใช้จ่ายเดินทางไปแต่ละไซต์งานตามแบบฟอร์ม "แบบขออนุมัติเบิกค่าเดินทาง" ของบริษัท แนบหลักฐาน Google Map และรูปภาพ ออกเป็น PDF ได้ทันที</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="teSortSelect" class="status-select">
+              <option value="dateDesc">เรียงตามวันที่ (ล่าสุดก่อน)</option>
+              <option value="dateAsc">เรียงตามวันที่ (เก่าก่อน)</option>
+              <option value="name">เรียงตามชื่อผู้เบิก</option>
+              <option value="project">เรียงตามโครงการ/บริษัท</option>
+              <option value="month">เรียงตามเดือน</option>
+            </select>
+            <button class="btn btn-blue" id="teNewBtn">+ สร้างเอกสารใหม่</button>
+          </div>
+        </div>
+        <div class="site-grid" id="teGrid"></div>
+      </div>
+
+      <!-- ===================== TRAVEL EXPENSE DETAIL / EDIT ===================== -->
+      <div id="teDetail" style="display:none;">
+        <button class="back-link" id="teBackBtn">← กลับไปหน้ารายการค่าเดินทาง</button>
+
+        <div class="card">
+          <h3>ข้อมูลผู้เบิก</h3>
+          <div class="two-col">
+            <div class="field">
+              <label>ชื่อผู้เบิก</label>
+              <select id="teEmployee"></select>
+            </div>
+            <div class="field">
+              <label>รหัสพนักงาน / ตำแหน่ง / ทะเบียนรถ</label>
+              <div id="teEmployeeInfo" class="te-card-title" style="padding:9px 0;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>ข้อมูลการเดินทาง</h3>
+          <div class="two-col">
+            <div class="field"><label>วันที่เดินทาง</label><input type="date" id="teDate"></div>
+            <div class="field"><label>เลขที่ Job No.</label><input id="teJobNo" placeholder="เช่น TS260300133"></div>
+          </div>
+          <div class="field"><label>วัตถุประสงค์ของการเดินทาง</label><textarea id="tePurpose" placeholder="รายละเอียดการเดินทาง / โครงการ / โรงเรียน หรือสถานที่..."></textarea></div>
+          <div class="two-col">
+            <div class="field"><label>ชื่อบริษัท / ชื่อสำนักงาน</label><input id="teCompany"></div>
+            <div class="field"><label>ที่อยู่</label><input id="teAddress"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>ค่าใช้จ่าย</h3>
+          <div class="hint-small" style="margin-bottom:10px;">อัตราค่าน้ำมัน <input type="number" id="teRate" value="5" style="width:52px; border:1px solid var(--line); border-radius:5px; padding:3px 5px; font-family:inherit;"> บาท/กิโลเมตร (ตามระเบียบบริษัท)</div>
+          <table class="te-cost-table">
+            <tr><td>ไป (กิโลเมตร)</td><td><input type="number" id="teKmGo" step="0.1" placeholder="0"></td><td class="te-amt" id="teAmtGo">0.00</td><td>บาท</td></tr>
+            <tr><td>กลับ (กิโลเมตร)</td><td><input type="number" id="teKmReturn" step="0.1" placeholder="0"></td><td class="te-amt" id="teAmtReturn">0.00</td><td>บาท</td></tr>
+            <tr><td>ค่าทางด่วน</td><td></td><td><input type="number" id="teToll" placeholder="0"></td><td>บาท</td></tr>
+            <tr><td>ค่าจอดรถ</td><td></td><td><input type="number" id="teParking" placeholder="0"></td><td>บาท</td></tr>
+            <tr class="te-total-row"><td colspan="2">รวมเบิกเบี้ยเลี้ยงค่าเดินทาง</td><td class="te-amt" id="teTotal">0.00</td><td>บาท</td></tr>
+          </table>
+          <div class="hint-small" id="teTotalText" style="margin-top:8px; padding:8px 10px; background:var(--grey-bg); border-radius:6px; text-align:center;">—</div>
+        </div>
+
+        <div class="card">
+          <h3>รูปภาพหลักฐาน</h3>
+          <div class="te-photo-grid">
+            <div class="te-photo-col">
+              <div class="te-photo-label">แผนที่เส้นทางไป (Google Map)</div>
+              <div class="te-photo-slot" data-slot="photoMapGo" id="teSlot_photoMapGo"><div class="te-empty">ยังไม่มีรูป</div></div>
+              <div class="te-photo-actions">
+                <button class="btn btn-outline" data-slot="photoMapGo" data-action="pick">เลือกรูป</button>
+                <button class="btn btn-outline" data-slot="photoMapGo" data-action="snap">📷 จับภาพหน้าจอ</button>
+              </div>
+            </div>
+            <div class="te-photo-col">
+              <div class="te-photo-label">แผนที่เส้นทางกลับ (Google Map)</div>
+              <div class="te-photo-slot" data-slot="photoMapReturn" id="teSlot_photoMapReturn"><div class="te-empty">ยังไม่มีรูป</div></div>
+              <div class="te-photo-actions">
+                <button class="btn btn-outline" data-slot="photoMapReturn" data-action="pick">เลือกรูป</button>
+                <button class="btn btn-outline" data-slot="photoMapReturn" data-action="snap">📷 จับภาพหน้าจอ</button>
+              </div>
+            </div>
+            <div class="te-photo-col">
+              <div class="te-photo-label">รูปภาพหลักฐานเพิ่มเติม 1</div>
+              <div class="te-photo-slot" data-slot="photoExtra1" id="teSlot_photoExtra1"><div class="te-empty">ยังไม่มีรูป</div></div>
+              <div class="te-photo-actions">
+                <button class="btn btn-outline" data-slot="photoExtra1" data-action="pick">เลือกรูป</button>
+                <button class="btn btn-outline" data-slot="photoExtra1" data-action="snap">📷 จับภาพหน้าจอ</button>
+              </div>
+            </div>
+            <div class="te-photo-col">
+              <div class="te-photo-label">รูปภาพหลักฐานเพิ่มเติม 2</div>
+              <div class="te-photo-slot" data-slot="photoExtra2" id="teSlot_photoExtra2"><div class="te-empty">ยังไม่มีรูป</div></div>
+              <div class="te-photo-actions">
+                <button class="btn btn-outline" data-slot="photoExtra2" data-action="pick">เลือกรูป</button>
+                <button class="btn btn-outline" data-slot="photoExtra2" data-action="snap">📷 จับภาพหน้าจอ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-outline" id="teDeleteBtn" style="color:var(--red); border-color:#F0B8B8; margin-right:auto;">ลบเอกสาร</button>
+          <button class="btn btn-outline" id="teSaveBtn">บันทึก</button>
+          <button class="btn btn-blue" id="teExportBtn">ดาวน์โหลดเป็น PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden print template for Travel Expense PDF export — exact replica of the
+       official "แบบขออนุมัติเบิกค่าเดินทาง" Excel form -->
+  <div id="tePrintRoot">
+    <div id="tePrintPage">
+      <div class="tep-header">
+        <img id="tepLogo" src="" alt="SYNNEX">
+        <div class="tep-co">Synnex (Thailand) Public Company Limited</div>
+      </div>
+      <div class="tep-title">แบบขออนุมัติเบิกค่าเดินทาง</div>
+
+      <table class="tep-info">
+        <tr>
+          <td class="lbl">ข้าพเจ้า</td><td class="val tep-red" id="tepName" colspan="3">—</td>
+          <td class="lbl">รหัสพนักงาน</td><td class="val tep-red" id="tepCode">—</td>
+          <td class="lbl">ตำแหน่ง</td><td class="val tep-red tep-small6" id="tepPosition" colspan="3">—</td>
+        </tr>
+        <tr>
+          <td class="lbl">แผนก</td><td class="val tep-blue" colspan="2">Technical Services</td>
+          <td class="lbl">ฝ่าย</td><td class="val tep-blue" colspan="2">Professional Service</td>
+          <td class="lbl">ทะเบียนรถยนต์</td><td class="val tep-red" colspan="3" id="tepPlate">—</td>
+        </tr>
+      </table>
+
+      <div class="tep-intent">มีความประสงค์จะเบิกค่าเดินทาง ตามระเบียบของบริษัทฯ โดยมีรายละเอียด ดังนี้</div>
+      <table class="tep-purpose">
+        <tr><td class="lbl">วัตถุประสงค์ของการเดินทาง :</td><td class="tep-yellow" id="tepPurpose">—</td></tr>
+        <tr><td class="lbl">JobNo :</td><td class="tep-yellow" id="tepJobNo">—</td></tr>
+        <tr><td class="lbl">ชื่อบริษัท / ชื่อสำนักงาน :</td><td class="tep-yellow" id="tepCompany">—</td></tr>
+        <tr><td class="lbl">ที่อยู่ :</td><td class="tep-yellow" id="tepAddress">—</td></tr>
+      </table>
+
+      <table class="tep-cost">
+        <tr>
+          <th style="width:12%;">วันที่</th>
+          <th style="width:22%;">เลขที่ไมล์ก่อนเดินทาง</th>
+          <th style="width:22%;">เลขที่ไมล์หลังเดินทาง</th>
+          <th style="width:22%;">ข้อมูลการเดินทาง</th>
+          <th style="width:22%;">รวมเบิกค่าน้ำมันเดินทาง</th>
+        </tr>
+        <tr>
+          <td rowspan="4" class="tep-yellow" id="tepDate">—</td>
+          <td rowspan="4" style="vertical-align:top; color:#999;">Google Map</td>
+          <td rowspan="4" style="vertical-align:top; color:#999;">Google Map</td>
+          <td class="tep-left">ไป &nbsp;<span class="tep-yellow" id="tepKmGo">0</span>&nbsp;กิโลเมตร</td>
+          <td class="tep-right"><span id="tepAmtGo">0</span>&nbsp;บาท</td>
+        </tr>
+        <tr>
+          <td class="tep-left">กลับ &nbsp;<span class="tep-yellow" id="tepKmReturn">0</span>&nbsp;กิโลเมตร</td>
+          <td class="tep-right"><span id="tepAmtReturn">0</span>&nbsp;บาท</td>
+        </tr>
+        <tr>
+          <td class="tep-left">ทางด่วน &nbsp;<span class="tep-yellow" id="tepToll">0</span>&nbsp;บาท</td>
+          <td class="tep-right"><span id="tepTollAmt">0</span>&nbsp;บาท</td>
+        </tr>
+        <tr>
+          <td class="tep-left">ค่าจอดรถ</td>
+          <td class="tep-right"><span id="tepParkingAmt">0</span>&nbsp;บาท</td>
+        </tr>
+        <tr class="tep-total">
+          <td colspan="3" class="tep-left" style="padding-left:8px;">รวมเบิกเบี้ยเลี้ยงค่าเดินทาง</td>
+          <td colspan="2" class="tep-right"><span id="tepTotal">0</span>&nbsp;บาท</td>
+        </tr>
+        <tr><td colspan="5" class="tep-textamt" id="tepTotalText">—</td></tr>
+      </table>
+
+      <div class="tep-photos">
+        <div class="tep-photo-col">
+          <div class="tep-photo-box" id="tepPhoto_photoMapGo"><span>แผนที่เส้นทางไป</span></div>
+          <div class="tep-photo-box" id="tepPhoto_photoMapReturn"><span>แผนที่เส้นทางกลับ</span></div>
+        </div>
+        <div class="tep-photo-col">
+          <div class="tep-photo-box" id="tepPhoto_photoExtra1"><span>รูปภาพหลักฐาน 1</span></div>
+          <div class="tep-photo-box" id="tepPhoto_photoExtra2"><span>รูปภาพหลักฐาน 2</span></div>
+        </div>
+      </div>
+
+      <div class="tep-footer">
+        <div>การทำเรื่องขออนุมัติเบิกค่าน้ำมันเดินทาง มีเงื่อนไขดังนี้</div>
+        <div>&nbsp;-1.ค่าน้ำมันสำหรับการเดินทางนี้ ให้เบิกจ่าย จากเงินสดประจำภาค หรือ เบิกโดยตรงที่สำนักงานใหญ่ เท่านั้น</div>
+        <div>&nbsp;-2.ค่าน้ำมันเดินทางสามารถเบิกได้เฉพาะการเดินทางออกนอกพื้นจังหวัดที่ตั้งของสาขาที่มีระยะทางมากกว่า 50 กิโลเมตร</div>
+        <div>&nbsp;-3.ค่าน้ำมันเดินทางสามารถเบิกได้ต่อครั้งหลังการเดินทางต่อครั้ง กิโลเมตรละ 5 บาท</div>
+        <div>&nbsp;-4.ให้ทำเอกสารเบิก 1 เอกสารต่อ 1 รอบการเดินทางเท่านั้น</div>
+        <div>&nbsp;-5.ต้องมีรายงานบนระบบรายงาน Dealer Info &amp; Customer Site Visit ประกอบด้วยเท่านั้น</div>
       </div>
     </div>
   </div>
@@ -991,7 +1267,7 @@
         <p>หน้านี้ต้องเชื่อมกับ Google Sheet กลางของทีมก่อนใช้งาน (ผ่านไฟล์ <b>Code.gs</b> ที่แนบให้แยกต่างหาก — deploy เป็น Web App แล้ววาง URL ที่ได้ในหน้าตั้งค่า)</p>
         <button class="btn btn-blue" style="margin-top:14px;" id="gateSettingsBtn">⚙ ตั้งค่าการเชื่อมต่อ</button>
       `;
-      document.querySelector('.l2-wrap').appendChild(gate);
+      document.getElementById('tabSiteReport').appendChild(gate);
       document.getElementById('gateSettingsBtn').addEventListener('click', openSettings);
     }
     gate.style.display = 'block';
@@ -1021,6 +1297,401 @@
       setNote('error', '⚠️ <b>เชื่อมต่อไม่สำเร็จ:</b> ' + escapeHtml(e.message) + ' — ตรวจสอบ URL หรือการตั้งค่าการเข้าถึงของ Apps Script แล้วลองใหม่');
     }
   }
+
+
+  // ================= TRAVEL EXPENSE (ค่าเดินทาง) =================
+  const TE_EMPLOYEES = [
+    { name:'นายสุวรรณ รื่นสุคนธ์', code:'05405', position:'Installation & Maintenance Services, Senior Assistant Manager', plate:'ยังไม่ทราบ' },
+    { name:'นางสาวสุภิชยา เต๊ะขันหมาก', code:'05422', position:'Site Engineer, Senior Officer', plate:'ยังไม่ทราบ' },
+    { name:'นายศุภกิตติ์ โสชัยยัง', code:'05452', position:'Technical Engineer, Officer', plate:'ยังไม่ทราบ' },
+    { name:'นายบรรพฎ ขุนศรี', code:'04551', position:'Installation, Officer', plate:'ยังไม่ทราบ' },
+    { name:'นายณัฐพล โคตรพันธ์', code:'05675', position:'Electrical Engineer, Supervisor', plate:'ยังไม่ทราบ' }
+  ];
+  const TE_PHOTO_SLOTS = ['photoMapGo','photoMapReturn','photoExtra1','photoExtra2'];
+
+  function teNumTh(n){
+    const digits = ['ศูนย์','หนึ่ง','สอง','สาม','สี่','ห้า','หก','เจ็ด','แปด','เก้า'];
+    const units = ['','สิบ','ร้อย','พัน','หมื่น','แสน','ล้าน'];
+    n = Math.floor(n);
+    if(n===0) return 'ศูนย์';
+    let s = String(n);
+    let out = '';
+    const len = s.length;
+    for(let i=0;i<len;i++){
+      const d = parseInt(s[i],10);
+      const pos = len-i-1;
+      if(d===0) continue;
+      if(pos>=6){ if(pos%6===0){ out += teNumTh(Math.floor(n/1000000)) + 'ล้าน'; } continue; }
+      const unitIdx = pos%6;
+      if(unitIdx===0){ out += digits[d]; }
+      else if(unitIdx===1){ out += (d===1?'':(d===2?'ยี่':digits[d])) + 'สิบ'; }
+      else { out += digits[d] + units[unitIdx]; }
+    }
+    return out.replace(/หนึ่งสิบ/,'สิบ');
+  }
+  function bahtText(amount){
+    amount = Math.round((Number(amount)||0) * 100) / 100;
+    const baht = Math.floor(amount);
+    const satang = Math.round((amount - baht) * 100);
+    let text = (baht===0 ? 'ศูนย์' : teNumTh(baht)) + 'บาท';
+    text += satang>0 ? (teNumTh(satang) + 'สตางค์') : 'ถ้วน';
+    return text;
+  }
+
+  let teExpenses = [];
+  let teCurrentId = null;
+  let tePhotos = { photoMapGo:'', photoMapReturn:'', photoExtra1:'', photoExtra2:'' };
+  let tePhotosChanged = new Set();
+  let teLoaded = false;
+
+  async function teApiGet(params){ return await apiGet(params); }
+  async function teListApi(){ return await teApiGet({ action:'listTravelExpenses' }); }
+  async function teGetApi(id){ return await teApiGet({ action:'getTravelExpense', id }); }
+  async function teSaveApi(expense){ return await apiPost({ action:'saveTravelExpense', expense }); }
+  async function teDeleteApi(id){ return await apiPost({ action:'deleteTravelExpense', id }); }
+
+  function teFillEmployeeSelect(){
+    const sel = document.getElementById('teEmployee');
+    if(sel.options.length) return;
+    TE_EMPLOYEES.forEach((emp,i)=>{
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = emp.name;
+      sel.appendChild(opt);
+    });
+  }
+  function teUpdateEmployeeInfo(){
+    const sel = document.getElementById('teEmployee');
+    const emp = TE_EMPLOYEES[sel.value] || TE_EMPLOYEES[0];
+    document.getElementById('teEmployeeInfo').innerHTML =
+      `รหัส <b>${escapeHtml(emp.code)}</b> · ${escapeHtml(emp.position)} · ทะเบียนรถ ${escapeHtml(emp.plate)}`;
+  }
+
+  function teMonthLabel(dateStr){
+    if(!dateStr) return '';
+    const d = new Date(dateStr+'T00:00:00');
+    return `${thaiMonths[d.getMonth()]} ${d.getFullYear()+543}`;
+  }
+
+  function teSortExpenses(list){
+    const mode = document.getElementById('teSortSelect').value;
+    const arr = list.slice();
+    if(mode==='dateDesc') arr.sort((a,b)=> (b.travelDate||'').localeCompare(a.travelDate||''));
+    else if(mode==='dateAsc') arr.sort((a,b)=> (a.travelDate||'').localeCompare(b.travelDate||''));
+    else if(mode==='name') arr.sort((a,b)=> (a.employeeName||'').localeCompare(b.employeeName||'','th'));
+    else if(mode==='project') arr.sort((a,b)=> (a.companyName||a.jobNo||'').localeCompare(b.companyName||b.jobNo||'','th'));
+    else if(mode==='month') arr.sort((a,b)=> (b.travelDate||'').slice(0,7).localeCompare((a.travelDate||'').slice(0,7)));
+    return arr;
+  }
+
+  function teRenderGrid(){
+    const grid = document.getElementById('teGrid');
+    grid.innerHTML = '';
+    const list = teSortExpenses(teExpenses);
+    if(list.length===0){
+      grid.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">ยังไม่มีรายการเบิกค่าเดินทาง — กด "+ สร้างเอกสารใหม่" เพื่อเริ่มรายการแรก</div>';
+      return;
+    }
+    list.forEach(t=>{
+      const card = document.createElement('div');
+      card.className = 'site-card';
+      card.innerHTML = `
+        <div class="top-row">
+          <div><div class="sname">${escapeHtml(t.employeeName||'-')}</div><div class="sclient">${escapeHtml(t.companyName||t.jobNo||'-')}</div></div>
+          <div class="status-pill progress">${(Number(t.total)||0).toLocaleString('th-TH',{minimumFractionDigits:2})} บาท</div>
+        </div>
+        <div class="meta-line"><span>วันที่เดินทาง</span><b>${t.travelDate ? toThaiDate(t.travelDate) : '-'}</b></div>
+        <div class="meta-line"><span>เดือน</span><b>${teMonthLabel(t.travelDate) || '-'}</b></div>
+        <div class="open-btn">เปิดเอกสาร →</div>
+      `;
+      card.addEventListener('click', ()=> teOpen(t.id));
+      grid.appendChild(card);
+    });
+  }
+
+  async function teRefreshList(){
+    try{ teExpenses = await teListApi(); if(!Array.isArray(teExpenses)) teExpenses = []; }
+    catch(e){ teExpenses = []; }
+    teRenderGrid();
+  }
+
+  function teResetPhotoSlots(){
+    tePhotos = { photoMapGo:'', photoMapReturn:'', photoExtra1:'', photoExtra2:'' };
+    tePhotosChanged = new Set();
+    TE_PHOTO_SLOTS.forEach(teRenderPhotoSlot);
+  }
+  function teRenderPhotoSlot(slot){
+    const el = document.getElementById('teSlot_'+slot);
+    const val = tePhotos[slot];
+    if(val){
+      el.innerHTML = `<img src="${val}"><div class="te-remove" data-slot="${slot}" data-action="remove">✕</div>`;
+    } else {
+      el.innerHTML = '<div class="te-empty">ยังไม่มีรูป</div>';
+    }
+  }
+
+  function teCompute(){
+    const rate = Number(document.getElementById('teRate').value) || 0;
+    const kmGo = Number(document.getElementById('teKmGo').value) || 0;
+    const kmReturn = Number(document.getElementById('teKmReturn').value) || 0;
+    const toll = Number(document.getElementById('teToll').value) || 0;
+    const parking = Number(document.getElementById('teParking').value) || 0;
+    const amtGo = kmGo * rate;
+    const amtReturn = kmReturn * rate;
+    const total = amtGo + amtReturn + toll + parking;
+    document.getElementById('teAmtGo').textContent = amtGo.toLocaleString('th-TH',{minimumFractionDigits:2});
+    document.getElementById('teAmtReturn').textContent = amtReturn.toLocaleString('th-TH',{minimumFractionDigits:2});
+    document.getElementById('teTotal').textContent = total.toLocaleString('th-TH',{minimumFractionDigits:2});
+    document.getElementById('teTotalText').textContent = '( ' + bahtText(total) + ' )';
+    return { rate, kmGo, kmReturn, toll, parking, amtGo, amtReturn, total };
+  }
+
+  ['teRate','teKmGo','teKmReturn','teToll','teParking'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', teCompute);
+  });
+  document.getElementById('teEmployee').addEventListener('change', teUpdateEmployeeInfo);
+
+  async function teOpen(id){
+    teCurrentId = id;
+    teFillEmployeeSelect();
+    document.getElementById('teEmployee').selectedIndex = 0;
+    if(id){
+      let t = null;
+      try{ t = await teGetApi(id); }catch(e){ alert('โหลดเอกสารไม่สำเร็จ: ' + e.message); return; }
+      if(!t){ alert('ไม่พบเอกสารนี้'); return; }
+      const empIdx = TE_EMPLOYEES.findIndex(x=>x.name===t.employeeName);
+      document.getElementById('teEmployee').selectedIndex = empIdx>=0 ? empIdx : 0;
+      document.getElementById('teDate').value = t.travelDate || '';
+      document.getElementById('teJobNo').value = t.jobNo || '';
+      document.getElementById('tePurpose').value = t.purpose || '';
+      document.getElementById('teCompany').value = t.companyName || '';
+      document.getElementById('teAddress').value = t.address || '';
+      document.getElementById('teRate').value = t.kmRate || 5;
+      document.getElementById('teKmGo').value = t.kmGo || '';
+      document.getElementById('teKmReturn').value = t.kmReturn || '';
+      document.getElementById('teToll').value = t.toll || '';
+      document.getElementById('teParking').value = t.parking || '';
+      tePhotos = {
+        photoMapGo: t.photoMapGo || '', photoMapReturn: t.photoMapReturn || '',
+        photoExtra1: t.photoExtra1 || '', photoExtra2: t.photoExtra2 || ''
+      };
+      tePhotosChanged = new Set();
+      TE_PHOTO_SLOTS.forEach(teRenderPhotoSlot);
+      document.getElementById('teDeleteBtn').style.display = '';
+    } else {
+      teCurrentId = uid();
+      document.getElementById('teDate').value = todayISO();
+      document.getElementById('teJobNo').value = '';
+      document.getElementById('tePurpose').value = '';
+      document.getElementById('teCompany').value = '';
+      document.getElementById('teAddress').value = '';
+      document.getElementById('teRate').value = 5;
+      document.getElementById('teKmGo').value = '';
+      document.getElementById('teKmReturn').value = '';
+      document.getElementById('teToll').value = '';
+      document.getElementById('teParking').value = '';
+      teResetPhotoSlots();
+      document.getElementById('teDeleteBtn').style.display = 'none';
+    }
+    teUpdateEmployeeInfo();
+    teCompute();
+    document.getElementById('teList').style.display = 'none';
+    document.getElementById('teDetail').style.display = 'block';
+  }
+
+  document.getElementById('teBackBtn').addEventListener('click', async ()=>{
+    document.getElementById('teDetail').style.display = 'none';
+    document.getElementById('teList').style.display = 'block';
+    await teRefreshList();
+  });
+  document.getElementById('teNewBtn').addEventListener('click', ()=> teOpen(null));
+  document.getElementById('teSortSelect').addEventListener('change', teRenderGrid);
+
+  function teBuildExpenseObject(){
+    const emp = TE_EMPLOYEES[document.getElementById('teEmployee').value] || TE_EMPLOYEES[0];
+    const c = teCompute();
+    const expense = {
+      id: teCurrentId,
+      employeeName: emp.name, employeeCode: emp.code, employeePosition: emp.position, employeePlate: emp.plate,
+      travelDate: document.getElementById('teDate').value || todayISO(),
+      jobNo: document.getElementById('teJobNo').value.trim(),
+      purpose: document.getElementById('tePurpose').value.trim(),
+      companyName: document.getElementById('teCompany').value.trim(),
+      address: document.getElementById('teAddress').value.trim(),
+      kmRate: c.rate, kmGo: c.kmGo, kmReturn: c.kmReturn, toll: c.toll, parking: c.parking,
+      total: c.total, totalText: bahtText(c.total)
+    };
+    TE_PHOTO_SLOTS.forEach(slot=>{
+      expense[slot] = tePhotosChanged.has(slot) ? (tePhotos[slot] || '') : 'KEEP';
+    });
+    return expense;
+  }
+
+  document.getElementById('teSaveBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('teSaveBtn'); const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    try{
+      const expense = teBuildExpenseObject();
+      await teSaveApi(expense);
+      tePhotosChanged = new Set();
+      document.getElementById('teDeleteBtn').style.display = '';
+      btn.textContent = 'บันทึกแล้ว ✓';
+      setTimeout(()=>{ btn.textContent = original; }, 1500);
+    }catch(e){ alert('บันทึกไม่สำเร็จ: ' + e.message); btn.textContent = original; }
+    finally{ btn.disabled = false; }
+  });
+
+  document.getElementById('teDeleteBtn').addEventListener('click', async ()=>{
+    if(!teCurrentId) return;
+    if(!confirm('ยืนยันลบเอกสารเบิกค่าเดินทางนี้? การลบไม่สามารถย้อนกลับได้ (รวมรูปภาพที่แนบไว้)')) return;
+    const btn = document.getElementById('teDeleteBtn'); btn.disabled = true; btn.textContent = 'กำลังลบ...';
+    try{
+      await teDeleteApi(teCurrentId);
+      document.getElementById('teDetail').style.display = 'none';
+      document.getElementById('teList').style.display = 'block';
+      await teRefreshList();
+    }catch(e){ alert('ลบไม่สำเร็จ: ' + e.message); }
+    finally{ btn.disabled = false; btn.textContent = 'ลบเอกสาร'; }
+  });
+
+  // ---------- photo slots: pick / screenshot / remove ----------
+  function teCompressImage(file, maxDim, quality){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let w=img.width,h=img.height;
+          if(w>h && w>maxDim){ h=h*(maxDim/w); w=maxDim; } else if(h>maxDim){ w=w*(maxDim/h); h=maxDim; }
+          const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror=reject; img.src=e.target.result;
+      };
+      reader.onerror=reject; reader.readAsDataURL(file);
+    });
+  }
+  async function teCaptureScreen(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia){
+      alert('เบราว์เซอร์นี้ไม่รองรับการจับภาพหน้าจอ กรุณาแคปหน้าจอเองแล้วใช้ปุ่ม "เลือกรูป" แทน');
+      return null;
+    }
+    let stream;
+    try{ stream = await navigator.mediaDevices.getDisplayMedia({ video:true }); }
+    catch(e){ return null; }
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    await video.play();
+    await new Promise(r=>setTimeout(r, 300));
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    stream.getTracks().forEach(t=>t.stop());
+    return canvas.toDataURL('image/jpeg', .85);
+  }
+
+  document.querySelectorAll('.te-photo-actions').forEach(row=>{
+    row.addEventListener('click', async (ev)=>{
+      const btn = ev.target.closest('button[data-action]');
+      if(!btn) return;
+      const slot = btn.dataset.slot;
+      const action = btn.dataset.action;
+      if(action==='pick'){
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
+        input.addEventListener('change', async ()=>{
+          const file = input.files[0]; if(!file) return;
+          const dataUrl = await teCompressImage(file, 1400, .8);
+          tePhotos[slot] = dataUrl; tePhotosChanged.add(slot); teRenderPhotoSlot(slot);
+        });
+        document.body.appendChild(input); input.click();
+        setTimeout(()=>document.body.removeChild(input), 3000);
+      } else if(action==='snap'){
+        const original = btn.textContent; btn.textContent = 'กำลังจับภาพ...'; btn.disabled = true;
+        try{
+          const dataUrl = await teCaptureScreen();
+          if(dataUrl){ tePhotos[slot] = dataUrl; tePhotosChanged.add(slot); teRenderPhotoSlot(slot); }
+        } finally { btn.textContent = original; btn.disabled = false; }
+      }
+    });
+  });
+  document.querySelectorAll('.te-photo-slot').forEach(slotEl=>{
+    slotEl.addEventListener('click', (ev)=>{
+      const rm = ev.target.closest('.te-remove');
+      if(!rm) return;
+      const slot = rm.dataset.slot;
+      tePhotos[slot] = ''; tePhotosChanged.add(slot); teRenderPhotoSlot(slot);
+    });
+  });
+
+  // ---------- PDF export ----------
+  document.getElementById('teExportBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('teExportBtn'); const original = btn.textContent;
+    btn.textContent = 'กำลังสร้าง PDF...'; btn.disabled = true;
+    try{
+      const emp = TE_EMPLOYEES[document.getElementById('teEmployee').value] || TE_EMPLOYEES[0];
+      const c = teCompute();
+      const dateVal = document.getElementById('teDate').value || todayISO();
+
+      document.getElementById('tepLogo').src = document.querySelector('.app-logo').src;
+      document.getElementById('tepName').textContent = emp.name;
+      document.getElementById('tepCode').textContent = emp.code;
+      document.getElementById('tepPosition').textContent = emp.position;
+      document.getElementById('tepPlate').textContent = emp.plate;
+      document.getElementById('tepPurpose').textContent = document.getElementById('tePurpose').value || '-';
+      document.getElementById('tepJobNo').textContent = document.getElementById('teJobNo').value || '-';
+      document.getElementById('tepCompany').textContent = document.getElementById('teCompany').value || '-';
+      document.getElementById('tepAddress').textContent = document.getElementById('teAddress').value || '-';
+      document.getElementById('tepDate').textContent = toThaiDate(dateVal);
+      document.getElementById('tepKmGo').textContent = c.kmGo;
+      document.getElementById('tepKmReturn').textContent = c.kmReturn;
+      document.getElementById('tepToll').textContent = c.toll;
+      document.getElementById('tepAmtGo').textContent = c.amtGo.toLocaleString('th-TH',{minimumFractionDigits:2});
+      document.getElementById('tepAmtReturn').textContent = c.amtReturn.toLocaleString('th-TH',{minimumFractionDigits:2});
+      document.getElementById('tepTollAmt').textContent = c.toll.toLocaleString('th-TH',{minimumFractionDigits:2});
+      document.getElementById('tepParkingAmt').textContent = c.parking.toLocaleString('th-TH',{minimumFractionDigits:2});
+      document.getElementById('tepTotal').textContent = c.total.toLocaleString('th-TH',{minimumFractionDigits:2});
+      document.getElementById('tepTotalText').textContent = '( ' + bahtText(c.total) + ' )';
+
+      TE_PHOTO_SLOTS.forEach(slot=>{
+        const box = document.getElementById('tepPhoto_'+slot);
+        const val = tePhotos[slot];
+        box.innerHTML = val ? `<img src="${val}">` : box.innerHTML;
+      });
+
+      const page = document.getElementById('tePrintPage');
+      const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', .95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','mm','a4');
+      const pageWidth=210, pageHeight=297;
+      const imgH = (canvas.height*pageWidth)/canvas.width;
+      let heightLeft = imgH, position = 0;
+      pdf.addImage(imgData,'JPEG',0,position,pageWidth,imgH);
+      heightLeft -= pageHeight;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData,'JPEG',0,position,pageWidth,imgH);
+        heightLeft -= pageHeight;
+      }
+      pdf.save(`TravelExpense_${dateVal.replace(/-/g,'')}_${slugify(emp.name)}.pdf`);
+    }catch(e){ alert('เกิดข้อผิดพลาดในการสร้าง PDF: '+e.message); }
+    finally{ btn.textContent = original; btn.disabled = false; }
+  });
+
+  // ---------- top-level tabs ----------
+  document.querySelectorAll('.top-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.top-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      const panelId = 'tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
+      const panel = document.getElementById(panelId);
+      if(panel) panel.classList.add('active');
+      if(btn.dataset.tab === 'travelExpense'){ teFillEmployeeSelect(); teRefreshList(); }
+    });
+  });
 
   // ---------- init ----------
   boot();
