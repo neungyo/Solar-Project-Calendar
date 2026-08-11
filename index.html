@@ -89,6 +89,29 @@
   .te-card-title{ font-size:12.5px; color:var(--muted); }
   .te-card-title b{ color:var(--ink); }
 
+  /* Travel Expense list — view mode toggle (list rows / card grid) */
+  .te-view-toggle{ display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#fff; }
+  .te-view-toggle button{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:#fff; border:none; cursor:pointer; color:var(--muted); }
+  .te-view-toggle button:not(:last-child){ border-right:1px solid var(--line); }
+  .te-view-toggle button.active{ background:var(--blue); color:#fff; }
+  .te-view-toggle button svg{ fill:currentColor; }
+
+  .te-list-view{ display:flex; flex-direction:column; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card); }
+  .te-list-row{ display:flex; align-items:center; gap:18px; padding:12px 16px; border-bottom:1px solid var(--line); cursor:pointer; transition:background .15s; }
+  .te-list-row:last-child{ border-bottom:none; }
+  .te-list-row:hover{ background:#F5F7FA; }
+  .te-list-row .tlr-name{ flex:1 1 220px; min-width:0; }
+  .te-list-row .tlr-name .n1{ font-size:13.5px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .te-list-row .tlr-name .n2{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .te-list-row .tlr-date{ flex:0 0 132px; font-size:11px; color:var(--muted); }
+  .te-list-row .tlr-date b{ display:block; color:var(--ink); font-size:12.5px; font-weight:700; margin-top:1px; }
+  .te-list-row .tlr-amt{ flex:0 0 110px; text-align:right; font-weight:800; font-size:13px; color:var(--ink); }
+  .te-list-row .tlr-open{ flex:0 0 auto; font-size:12px; color:var(--blue); font-weight:700; white-space:nowrap; }
+  @media (max-width:720px){
+    .te-list-row{ flex-wrap:wrap; gap:6px 14px; }
+    .te-list-row .tlr-date{ flex:0 0 auto; }
+  }
+
   /* Print/export replica of the official "แบบขออนุมัติเบิกค่าเดินทาง" template —
      black text only, compact enough to fit a single A4 page. */
   #tePrintRoot{ position:fixed; left:-9999px; top:0; }
@@ -460,7 +483,15 @@
             <h2>ค่าเดินทาง — รายการเบิกค่าเดินทาง</h2>
             <p>บันทึกค่าใช้จ่ายเดินทางไปแต่ละไซต์งานตามแบบฟอร์ม "แบบขออนุมัติเบิกค่าเดินทาง" ของบริษัท แนบหลักฐาน Google Map และรูปภาพ ออกเป็น PDF ได้ทันที</p>
           </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <div class="te-view-toggle" id="teViewToggle">
+              <button type="button" data-view="list" title="มุมมองแบบรายการ (แถว)">
+                <svg viewBox="0 0 20 20" width="16" height="16"><rect x="2" y="3" width="3" height="3" rx="0.6"></rect><rect x="7" y="3" width="11" height="3" rx="0.6"></rect><rect x="2" y="8.5" width="3" height="3" rx="0.6"></rect><rect x="7" y="8.5" width="11" height="3" rx="0.6"></rect><rect x="2" y="14" width="3" height="3" rx="0.6"></rect><rect x="7" y="14" width="11" height="3" rx="0.6"></rect></svg>
+              </button>
+              <button type="button" data-view="grid" title="มุมมองแบบการ์ด">
+                <svg viewBox="0 0 20 20" width="16" height="16"><rect x="2" y="2" width="7" height="7" rx="1"></rect><rect x="11" y="2" width="7" height="7" rx="1"></rect><rect x="2" y="11" width="7" height="7" rx="1"></rect><rect x="11" y="11" width="7" height="7" rx="1"></rect></svg>
+              </button>
+            </div>
             <select id="teSortSelect" class="status-select">
               <option value="dateDesc">เรียงตามวันที่ (ล่าสุดก่อน)</option>
               <option value="dateAsc">เรียงตามวันที่ (เก่าก่อน)</option>
@@ -1464,12 +1495,51 @@
     return arr;
   }
 
+  // ---------- list display mode (rows vs. cards) ----------
+  const TE_VIEW_KEY = 'tsTravelExpense::viewMode';
+  let teViewMode = localStorage.getItem(TE_VIEW_KEY) || 'list'; // "list" rows shown by default on first open
+
+  function teApplyViewToggleUI(){
+    document.querySelectorAll('#teViewToggle button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.view === teViewMode);
+    });
+  }
+  document.querySelectorAll('#teViewToggle button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      teViewMode = b.dataset.view;
+      localStorage.setItem(TE_VIEW_KEY, teViewMode);
+      teApplyViewToggleUI();
+      teRenderGrid();
+    });
+  });
+  teApplyViewToggleUI();
+
   function teRenderGrid(){
     const grid = document.getElementById('teGrid');
+    grid.className = teViewMode === 'list' ? 'te-list-view' : 'site-grid';
     grid.innerHTML = '';
     const list = teSortExpenses(teExpenses);
     if(list.length===0){
-      grid.innerHTML = '<div class="empty-note" style="grid-column:1/-1;">ยังไม่มีรายการเบิกค่าเดินทาง — กด "+ สร้างเอกสารใหม่" เพื่อเริ่มรายการแรก</div>';
+      grid.innerHTML = `<div class="empty-note"${teViewMode==='grid' ? ' style="grid-column:1/-1;"' : ''}>ยังไม่มีรายการเบิกค่าเดินทาง — กด "+ สร้างเอกสารใหม่" เพื่อเริ่มรายการแรก</div>`;
+      return;
+    }
+    if(teViewMode === 'list'){
+      list.forEach(t=>{
+        const row = document.createElement('div');
+        row.className = 'te-list-row';
+        row.innerHTML = `
+          <div class="tlr-name">
+            <div class="n1">${escapeHtml(t.employeeName||'-')}</div>
+            <div class="n2">${escapeHtml(t.companyName||t.jobNo||'-')}</div>
+          </div>
+          <div class="tlr-date">วันที่เดินทาง<b>${t.travelDate ? toThaiDate(t.travelDate) : '-'}</b></div>
+          <div class="tlr-date">เดือน<b>${teMonthLabel(t.travelDate) || '-'}</b></div>
+          <div class="tlr-amt">${(Number(t.total)||0).toLocaleString('th-TH',{minimumFractionDigits:2})} บาท</div>
+          <div class="tlr-open">เปิดเอกสาร →</div>
+        `;
+        row.addEventListener('click', ()=> teOpen(t.id));
+        grid.appendChild(row);
+      });
       return;
     }
     list.forEach(t=>{
