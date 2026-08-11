@@ -156,7 +156,7 @@
   #teReceiptPrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:20px 22px; box-sizing:border-box; overflow:hidden; }
   .terp-title{ font-size:13px; font-weight:700; margin-bottom:14px; }
   .terp-grid{ display:flex; align-items:center; justify-content:center; height:970px; }
-  .terp-portrait-row{ display:flex; gap:14px; align-items:center; justify-content:center; height:100%; }
+  .terp-portrait-grid{ display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:center; width:660px; }
   .terp-landscape-col{ display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; height:100%; }
   .terp-box{ flex:0 0 auto; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .terp-box img{ width:100%; height:100%; object-fit:contain; }
@@ -1770,30 +1770,25 @@
   }
 
   // Lay out a page of same-orientation receipt images into gridEl.
-  // Portrait pages: up to 2 bills side by side, large. Landscape pages: up to
-  // 5 bills stacked full-width down the page, with left/right margins.
+  // Portrait pages: up to 4 bills in a modest 2-column grid. Landscape pages:
+  // up to 5 bills stacked at a fixed, sensible scale with left/right margins.
   async function teLayoutReceiptGrid(gridEl, batch, type){
     gridEl.innerHTML = '';
     if(!batch.length) return;
-    const CH = 970;
     if(type === 'portrait'){
-      const GAP = 20;
-      const boxW = batch.length >= 2 ? 355 : 480;
-      const row = document.createElement('div');
-      row.className = 'terp-portrait-row';
-      row.style.gap = GAP + 'px';
+      const wrap = document.createElement('div');
+      wrap.className = 'terp-portrait-grid';
       batch.forEach(src=>{
         const box = document.createElement('div');
         box.className = 'terp-box';
-        box.style.width = boxW + 'px';
-        box.style.height = CH + 'px';
+        box.style.width = '320px';
+        box.style.height = '460px';
         box.innerHTML = `<img src="${src}">`;
-        row.appendChild(box);
+        wrap.appendChild(box);
       });
-      gridEl.appendChild(row);
+      gridEl.appendChild(wrap);
     } else {
-      const CW = 700, GAP = 14;
-      const boxH = (CH - GAP*(batch.length-1)) / batch.length;
+      const CW = 700, GAP = 14, BOX_H = 175;
       const col = document.createElement('div');
       col.className = 'terp-landscape-col';
       col.style.gap = GAP + 'px';
@@ -1801,7 +1796,7 @@
         const box = document.createElement('div');
         box.className = 'terp-box';
         box.style.width = CW + 'px';
-        box.style.height = boxH + 'px';
+        box.style.height = BOX_H + 'px';
         box.innerHTML = `<img src="${src}">`;
         col.appendChild(box);
       });
@@ -1809,9 +1804,10 @@
     }
   }
 
-  // Classify all receipts by orientation, then paginate: portrait bills 2-per-page
-  // (paired together), landscape bills 5-per-page (stacked together). Returns an
-  // ordered list of { type, items } pages — portrait pages first, then landscape.
+  // Classify all receipts by orientation, then paginate: portrait bills 4-per-page
+  // (2x2 grid), landscape bills 5-per-page (stacked). If there are portrait bills
+  // they lead (page 1 of the attachments); landscape pages follow — but if there
+  // are no portrait bills at all, the landscape pages simply start at page 1.
   async function teClassifyAndPaginateReceipts(list){
     const dims = await Promise.all(list.map(teLoadImgDims));
     const portraits = [], landscapes = [];
@@ -1820,7 +1816,7 @@
       (d.h >= d.w ? portraits : landscapes).push(src);
     });
     const pages = [];
-    for(let i=0;i<portraits.length;i+=2) pages.push({ type:'portrait', items: portraits.slice(i,i+2) });
+    for(let i=0;i<portraits.length;i+=4) pages.push({ type:'portrait', items: portraits.slice(i,i+4) });
     for(let i=0;i<landscapes.length;i+=5) pages.push({ type:'landscape', items: landscapes.slice(i,i+5) });
     return pages;
   }
