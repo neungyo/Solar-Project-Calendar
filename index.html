@@ -336,13 +336,33 @@
   .action-row{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
 
   /* Modal */
-  #modalOverlay, #settingsOverlay{ position:fixed; inset:0; background:rgba(20,30,50,.5); display:none; align-items:center; justify-content:center; z-index:50; }
-  #modalOverlay.show, #settingsOverlay.show{ display:flex; }
-  .modal{ background:#fff; border-radius:12px; padding:22px 24px; width:360px; }
+  #modalOverlay, #settingsOverlay, #teChangePwOverlay, #teUsersOverlay{ position:fixed; inset:0; background:rgba(20,30,50,.5); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  #modalOverlay.show, #settingsOverlay.show, #teChangePwOverlay.show, #teUsersOverlay.show{ display:flex; }
+  .modal{ background:#fff; border-radius:12px; padding:22px 24px; width:360px; max-height:90vh; overflow:auto; }
   .modal h3{ margin:0 0 14px; color:var(--blue); font-size:15px; }
+  .modal h4{ margin:0 0 8px; font-size:12.5px; color:var(--ink); }
   .modal .field{ margin-bottom:12px; }
-  .modal input,.modal select{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-size:12.8px; }
+  .modal input,.modal select{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-size:12.8px; box-sizing:border-box; }
   .modal .row{ display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+
+  /* ---------- Travel Expense login ---------- */
+  .te-auth-gate{ max-width:360px; margin:50px auto; text-align:center; }
+  .te-auth-gate h2{ color:var(--blue); font-size:17px; margin-bottom:6px; }
+  .te-auth-gate p{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+  .te-auth-gate .field{ margin-bottom:12px; text-align:left; }
+  .te-auth-gate input{ width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:7px; font-size:13px; box-sizing:border-box; }
+  .te-auth-error{ color:var(--red); font-size:11.5px; margin:4px 0 8px; min-height:14px; }
+  .te-auth-bar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:#F3F5F9; border:1px solid var(--line); border-radius:10px; padding:9px 14px; margin-bottom:14px; }
+  .te-auth-bar .who{ font-size:12.5px; color:var(--muted); }
+  .te-auth-bar .who b{ color:var(--ink); }
+  .te-auth-bar .role-pill{ display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:10.5px; font-weight:700; background:#E7ECF5; color:var(--blue-dark,var(--blue)); }
+  .te-auth-bar .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .te-auth-bar .actions button{ font-size:11.5px; padding:6px 10px; }
+  .te-users-list{ max-height:220px; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+  .te-users-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--line); font-size:12px; }
+  .te-users-row:last-child{ border-bottom:none; }
+  .te-users-row .u1{ font-weight:700; color:var(--ink); }
+  .te-users-row .u2{ color:var(--muted); font-size:11px; }
 
   /* Printable page (off-screen) */
   #printRoot{ position:fixed; left:-9999px; top:0; }
@@ -491,8 +511,30 @@
         <span class="crumb"><b>ค่าเดินทาง</b> — บันทึกค่าใช้จ่ายในการเดินทางไปแต่ละไซต์งาน</span>
       </div>
 
+      <!-- ===================== LOGIN GATE (shown when not logged in) ===================== -->
+      <div id="teAuthGate" style="display:none;">
+        <div class="te-auth-gate">
+          <h2>เข้าสู่ระบบ — ค่าเดินทาง</h2>
+          <p>หน้านี้ต้องเข้าสู่ระบบก่อนใช้งาน เพื่อให้แต่ละคนเห็นเฉพาะรายการเบิกค่าเดินทางของตัวเอง</p>
+          <div class="field"><label>Username</label><input type="text" id="teAuthUser" autocomplete="username"></div>
+          <div class="field"><label>Password</label><input type="password" id="teAuthPass" autocomplete="current-password"></div>
+          <div class="te-auth-error" id="teAuthError"></div>
+          <button class="btn btn-blue" id="teAuthLoginBtn" style="width:100%;">เข้าสู่ระบบ</button>
+        </div>
+      </div>
+
+      <!-- ===================== AUTH BAR (shown when logged in) ===================== -->
+      <div id="teAuthBar" class="te-auth-bar" style="display:none;">
+        <div class="who">เข้าสู่ระบบเป็น <b id="teAuthWho">-</b><span class="role-pill" id="teAuthRole"></span></div>
+        <div class="actions">
+          <button class="btn btn-outline" id="teAuthChangePwBtn">เปลี่ยนรหัสผ่าน</button>
+          <button class="btn btn-outline" id="teAuthManageUsersBtn" style="display:none;">จัดการผู้ใช้งาน</button>
+          <button class="btn btn-outline" id="teAuthLogoutBtn">ออกจากระบบ</button>
+        </div>
+      </div>
+
       <!-- ===================== TRAVEL EXPENSE LIST ===================== -->
-      <div id="teList">
+      <div id="teList" style="display:none;">
         <div class="sr-head">
           <div>
             <h2>ค่าเดินทาง — รายการเบิกค่าเดินทาง</h2>
@@ -507,6 +549,9 @@
                 <svg viewBox="0 0 20 20" width="16" height="16"><rect x="2" y="2" width="7" height="7" rx="1"></rect><rect x="11" y="2" width="7" height="7" rx="1"></rect><rect x="2" y="11" width="7" height="7" rx="1"></rect><rect x="11" y="11" width="7" height="7" rx="1"></rect></svg>
               </button>
             </div>
+            <select id="teEmployeeFilterSelect" class="status-select" style="display:none;">
+              <option value="">ทุกคน</option>
+            </select>
             <select id="teSortSelect" class="status-select">
               <option value="dateDesc">เรียงตามวันที่ (ล่าสุดก่อน)</option>
               <option value="dateAsc">เรียงตามวันที่ (เก่าก่อน)</option>
@@ -783,6 +828,45 @@
       <div class="row">
         <button class="btn btn-outline" id="sCancel">ยกเลิก</button>
         <button class="btn btn-blue" id="sSave">บันทึกและเชื่อมต่อ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Travel Expense: change password modal -->
+  <div id="teChangePwOverlay">
+    <div class="modal">
+      <h3>เปลี่ยนรหัสผ่าน</h3>
+      <div class="field"><label>รหัสผ่านเดิม</label><input type="password" id="tcpOld"></div>
+      <div class="field"><label>รหัสผ่านใหม่</label><input type="password" id="tcpNew"></div>
+      <div class="field"><label>ยืนยันรหัสผ่านใหม่</label><input type="password" id="tcpNew2"></div>
+      <div class="te-auth-error" id="tcpError"></div>
+      <div class="row">
+        <button class="btn btn-outline" id="tcpCancelBtn">ยกเลิก</button>
+        <button class="btn btn-blue" id="tcpSaveBtn">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Travel Expense: admin user management modal -->
+  <div id="teUsersOverlay">
+    <div class="modal" style="width:420px;">
+      <h3>จัดการผู้ใช้งาน — ค่าเดินทาง</h3>
+      <div class="te-users-list" id="teUsersList"></div>
+      <hr style="margin:16px 0; border:none; border-top:1px solid var(--line);">
+      <h4>สร้างผู้ใช้งานใหม่</h4>
+      <div class="field"><label>Username</label><input type="text" id="tnuUsername"></div>
+      <div class="field"><label>Password</label><input type="password" id="tnuPassword"></div>
+      <div class="field"><label>ผูกกับพนักงาน (สำหรับกรองรายการของตัวเอง)</label>
+        <select id="tnuEmployee"></select>
+      </div>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin:2px 0 12px;">
+        <input type="checkbox" id="tnuIsAdmin" style="width:auto;"> ให้เป็นผู้ดูแลระบบ (เห็นข้อมูลของทุกคน)
+      </label>
+      <div class="field"><label>รหัสผ่านของคุณ (ยืนยันตัวตนก่อนสร้างผู้ใช้ใหม่)</label><input type="password" id="tnuAdminPassword"></div>
+      <div class="te-auth-error" id="tnuError"></div>
+      <div class="row">
+        <button class="btn btn-outline" id="tuCloseBtn">ปิด</button>
+        <button class="btn btn-blue" id="tnuCreateBtn">+ สร้างผู้ใช้งาน</button>
       </div>
     </div>
   </div>
@@ -1487,21 +1571,212 @@
   let teLoaded = false;
 
   async function teApiGet(params){ return await apiGet(params); }
-  async function teListApi(){ return await teApiGet({ action:'listTravelExpenses' }); }
+  async function teListApi(employeeCode){ return await teApiGet(employeeCode ? { action:'listTravelExpenses', employeeCode } : { action:'listTravelExpenses' }); }
   async function teGetApi(id){ return await teApiGet({ action:'getTravelExpense', id }); }
   async function teSaveApi(expense){ return await apiPost({ action:'saveTravelExpense', expense }); }
   async function teDeleteApi(id){ return await apiPost({ action:'deleteTravelExpense', id }); }
   async function teSetClaimedApi(id, claimed){ return await apiPost({ action:'setTravelClaimed', id, claimed }); }
 
+  // ---------- login (ค่าเดินทาง only) ----------
+  const TE_AUTH_KEY = 'tsTravelExpense::session';
+  let teSession = null;
+  try{ teSession = JSON.parse(localStorage.getItem(TE_AUTH_KEY) || 'null'); }catch(e){ teSession = null; }
+
+  function teIsLoggedIn(){ return !!(teSession && teSession.username); }
+  function teIsAdmin(){ return teIsLoggedIn() && teSession.role === 'admin'; }
+
+  async function teAuthLoginApi(username, password){ return await apiPost({ action:'teAuthLogin', username, password }); }
+  async function teAuthChangePasswordApi(username, oldPassword, newPassword){
+    return await apiPost({ action:'teAuthChangePassword', username, oldPassword, newPassword });
+  }
+  async function teAuthCreateUserApi(adminUsername, adminPassword, newUser){
+    return await apiPost({ action:'teAuthCreateUser', adminUsername, adminPassword, newUser });
+  }
+  async function teAuthListUsersApi(requesterUsername){
+    return await teApiGet({ action:'teAuthListUsers', requesterUsername });
+  }
+
   function teFillEmployeeSelect(){
     const sel = document.getElementById('teEmployee');
-    if(sel.options.length) return;
-    TE_EMPLOYEES.forEach((emp,i)=>{
+    if(!sel.options.length){
+      TE_EMPLOYEES.forEach((emp,i)=>{
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = emp.name;
+        sel.appendChild(opt);
+      });
+    }
+    // Non-admin accounts can only create/manage their own travel-expense
+    // documents — lock the picker to their linked employee.
+    if(teIsLoggedIn() && !teIsAdmin()){
+      const idx = TE_EMPLOYEES.findIndex(x=>x.code===teSession.employeeCode);
+      if(idx>=0){ sel.selectedIndex = idx; }
+      sel.disabled = true;
+    } else {
+      sel.disabled = false;
+    }
+  }
+
+  function teFillEmployeeFilterSelect(){
+    const sel = document.getElementById('teEmployeeFilterSelect');
+    if(sel.options.length > 1) return;
+    TE_EMPLOYEES.forEach(emp=>{
       const opt = document.createElement('option');
-      opt.value = i; opt.textContent = emp.name;
+      opt.value = emp.code; opt.textContent = emp.name;
       sel.appendChild(opt);
     });
   }
+
+  function teRenderAuthUI(){
+    const gate = document.getElementById('teAuthGate');
+    const bar = document.getElementById('teAuthBar');
+    const list = document.getElementById('teList');
+    const detail = document.getElementById('teDetail');
+    const filterSel = document.getElementById('teEmployeeFilterSelect');
+    if(!teIsLoggedIn()){
+      gate.style.display = 'block';
+      bar.style.display = 'none';
+      list.style.display = 'none';
+      detail.style.display = 'none';
+      return;
+    }
+    gate.style.display = 'none';
+    bar.style.display = 'flex';
+    if(detail.style.display !== 'block'){ list.style.display = 'block'; }
+    document.getElementById('teAuthWho').textContent = teSession.employeeName || teSession.username;
+    document.getElementById('teAuthRole').textContent = teIsAdmin() ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน';
+    document.getElementById('teAuthManageUsersBtn').style.display = teIsAdmin() ? '' : 'none';
+    if(teIsAdmin()){
+      teFillEmployeeFilterSelect();
+      filterSel.style.display = '';
+    } else {
+      filterSel.style.display = 'none';
+      filterSel.value = '';
+    }
+  }
+
+  document.getElementById('teAuthLoginBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('teAuthLoginBtn'); const original = btn.textContent;
+    const username = document.getElementById('teAuthUser').value.trim();
+    const password = document.getElementById('teAuthPass').value;
+    const errEl = document.getElementById('teAuthError');
+    errEl.textContent = '';
+    if(!username || !password){ errEl.textContent = 'กรุณากรอก Username และ Password'; return; }
+    btn.textContent = 'กำลังเข้าสู่ระบบ...'; btn.disabled = true;
+    try{
+      const res = await teAuthLoginApi(username, password);
+      if(!res.ok){ errEl.textContent = res.error || 'เข้าสู่ระบบไม่สำเร็จ'; return; }
+      teSession = res.user;
+      localStorage.setItem(TE_AUTH_KEY, JSON.stringify(teSession));
+      document.getElementById('teAuthPass').value = '';
+      teRenderAuthUI();
+      teFillEmployeeSelect();
+      await teRefreshList();
+    }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; }
+    finally{ btn.textContent = original; btn.disabled = false; }
+  });
+  ['teAuthUser','teAuthPass'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', ev=>{
+      if(ev.key === 'Enter') document.getElementById('teAuthLoginBtn').click();
+    });
+  });
+
+  document.getElementById('teAuthLogoutBtn').addEventListener('click', ()=>{
+    teSession = null;
+    localStorage.removeItem(TE_AUTH_KEY);
+    document.getElementById('teAuthUser').value = '';
+    document.getElementById('teAuthPass').value = '';
+    document.getElementById('teAuthError').textContent = '';
+    teRenderAuthUI();
+  });
+
+  // ---- change password ----
+  document.getElementById('teAuthChangePwBtn').addEventListener('click', ()=>{
+    document.getElementById('tcpOld').value = '';
+    document.getElementById('tcpNew').value = '';
+    document.getElementById('tcpNew2').value = '';
+    document.getElementById('tcpError').textContent = '';
+    document.getElementById('teChangePwOverlay').classList.add('show');
+  });
+  document.getElementById('tcpCancelBtn').addEventListener('click', ()=>{
+    document.getElementById('teChangePwOverlay').classList.remove('show');
+  });
+  document.getElementById('tcpSaveBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('tcpSaveBtn'); const original = btn.textContent;
+    const oldPw = document.getElementById('tcpOld').value;
+    const newPw = document.getElementById('tcpNew').value;
+    const newPw2 = document.getElementById('tcpNew2').value;
+    const errEl = document.getElementById('tcpError');
+    errEl.textContent = '';
+    if(!oldPw || !newPw){ errEl.textContent = 'กรุณากรอกให้ครบ'; return; }
+    if(newPw !== newPw2){ errEl.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน'; return; }
+    btn.textContent = 'กำลังบันทึก...'; btn.disabled = true;
+    try{
+      const res = await teAuthChangePasswordApi(teSession.username, oldPw, newPw);
+      if(!res.ok){ errEl.textContent = res.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ'; return; }
+      document.getElementById('teChangePwOverlay').classList.remove('show');
+      alert('เปลี่ยนรหัสผ่านเรียบร้อยแล้ว');
+    }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; }
+    finally{ btn.textContent = original; btn.disabled = false; }
+  });
+
+  // ---- admin: manage users ----
+  document.getElementById('teAuthManageUsersBtn').addEventListener('click', async ()=>{
+    document.getElementById('tnuUsername').value = '';
+    document.getElementById('tnuPassword').value = '';
+    document.getElementById('tnuIsAdmin').checked = false;
+    document.getElementById('tnuAdminPassword').value = '';
+    document.getElementById('tnuError').textContent = '';
+    const empSel = document.getElementById('tnuEmployee');
+    if(!empSel.options.length){
+      TE_EMPLOYEES.forEach((emp,i)=>{
+        const opt = document.createElement('option');
+        opt.value = emp.code; opt.textContent = emp.name;
+        empSel.appendChild(opt);
+      });
+    }
+    const listEl = document.getElementById('teUsersList');
+    listEl.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">กำลังโหลด...</div>';
+    document.getElementById('teUsersOverlay').classList.add('show');
+    try{
+      const users = await teAuthListUsersApi(teSession.username);
+      if(!Array.isArray(users)){ listEl.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--red);">โหลดรายชื่อไม่สำเร็จ</div>'; return; }
+      listEl.innerHTML = '';
+      users.forEach(u=>{
+        const row = document.createElement('div');
+        row.className = 'te-users-row';
+        row.innerHTML = `<div><div class="u1">${escapeHtml(u.username)}</div><div class="u2">${escapeHtml(u.employeeName||'-')}</div></div><div class="u2">${u.role==='admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}</div>`;
+        listEl.appendChild(row);
+      });
+    }catch(e){ listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--red);">โหลดรายชื่อไม่สำเร็จ: ${escapeHtml(e.message)}</div>`; }
+  });
+  document.getElementById('tuCloseBtn').addEventListener('click', ()=>{
+    document.getElementById('teUsersOverlay').classList.remove('show');
+  });
+  document.getElementById('tnuCreateBtn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('tnuCreateBtn'); const original = btn.textContent;
+    const errEl = document.getElementById('tnuError');
+    errEl.textContent = '';
+    const username = document.getElementById('tnuUsername').value.trim();
+    const password = document.getElementById('tnuPassword').value;
+    const empSel = document.getElementById('tnuEmployee');
+    const emp = TE_EMPLOYEES.find(x=>x.code === empSel.value) || TE_EMPLOYEES[0];
+    const isAdmin = document.getElementById('tnuIsAdmin').checked;
+    const adminPassword = document.getElementById('tnuAdminPassword').value;
+    if(!username || !password){ errEl.textContent = 'กรุณากรอก Username และ Password'; return; }
+    if(!adminPassword){ errEl.textContent = 'กรุณากรอกรหัสผ่านของคุณเพื่อยืนยันตัวตน'; return; }
+    btn.textContent = 'กำลังสร้าง...'; btn.disabled = true;
+    try{
+      const res = await teAuthCreateUserApi(teSession.username, adminPassword, {
+        username, password, role: isAdmin ? 'admin' : 'user',
+        employeeCode: emp.code, employeeName: emp.name
+      });
+      if(!res.ok){ errEl.textContent = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; return; }
+      document.getElementById('teAuthManageUsersBtn').click();
+    }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; }
+    finally{ btn.textContent = original; btn.disabled = false; }
+  });
+
+  document.getElementById('teEmployeeFilterSelect').addEventListener('change', teRefreshList);
   function teUpdateEmployeeInfo(){
     const sel = document.getElementById('teEmployee');
     const emp = TE_EMPLOYEES[sel.value] || TE_EMPLOYEES[0];
@@ -1619,7 +1894,11 @@
   }
 
   async function teRefreshList(){
-    try{ teExpenses = await teListApi(); if(!Array.isArray(teExpenses)) teExpenses = []; }
+    if(!teIsLoggedIn()){ teExpenses = []; teRenderGrid(); return; }
+    // Non-admin accounts are always locked to their own employeeCode. Admin can
+    // optionally narrow the list down via the employee filter dropdown.
+    const filterCode = teIsAdmin() ? (document.getElementById('teEmployeeFilterSelect').value || '') : teSession.employeeCode;
+    try{ teExpenses = await teListApi(filterCode); if(!Array.isArray(teExpenses)) teExpenses = []; }
     catch(e){ teExpenses = []; }
     teRenderGrid();
   }
@@ -1706,13 +1985,18 @@
   document.getElementById('teEmployee').addEventListener('change', teUpdateEmployeeInfo);
 
   async function teOpen(id){
+    if(!teIsLoggedIn()) return;
     teCurrentId = id;
     teFillEmployeeSelect();
-    document.getElementById('teEmployee').selectedIndex = 0;
+    if(!(teIsLoggedIn() && !teIsAdmin())) document.getElementById('teEmployee').selectedIndex = 0;
     if(id){
       let t = null;
       try{ t = await teGetApi(id); }catch(e){ alert('โหลดเอกสารไม่สำเร็จ: ' + e.message); return; }
       if(!t){ alert('ไม่พบเอกสารนี้'); return; }
+      if(!teIsAdmin() && t.employeeCode && t.employeeCode !== teSession.employeeCode){
+        alert('คุณไม่มีสิทธิ์ดูเอกสารนี้');
+        return;
+      }
       const empIdx = TE_EMPLOYEES.findIndex(x=>x.name===t.employeeName);
       document.getElementById('teEmployee').selectedIndex = empIdx>=0 ? empIdx : 0;
       document.getElementById('teDate').value = t.travelDate || '';
@@ -2191,7 +2475,10 @@
       const panelId = 'tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
       const panel = document.getElementById(panelId);
       if(panel) panel.classList.add('active');
-      if(btn.dataset.tab === 'travelExpense'){ teFillEmployeeSelect(); teRefreshList(); }
+      if(btn.dataset.tab === 'travelExpense'){
+        teRenderAuthUI();
+        if(teIsLoggedIn()){ teFillEmployeeSelect(); teRefreshList(); }
+      }
     });
   });
 
