@@ -111,6 +111,12 @@
     .te-list-row{ flex-wrap:wrap; gap:6px 14px; }
     .te-list-row .tlr-date{ flex:0 0 auto; }
   }
+  .tlr-claim{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--muted); cursor:pointer; flex:0 0 auto; white-space:nowrap; user-select:none; }
+  .tlr-claim input{ width:15px; height:15px; cursor:pointer; accent-color:#1B8A4C; }
+  .te-list-row.claimed{ background:#F3FBF5; }
+  .te-list-row.claimed .tlr-claim{ color:#1B8A4C; font-weight:700; }
+  .site-card.claimed{ background:#F3FBF5; border-color:#BFE6CC; }
+  .site-card.claimed .tlr-claim{ color:#1B8A4C; font-weight:700; }
 
   /* Print/export replica of the official "แบบขออนุมัติเบิกค่าเดินทาง" template —
      black text only, compact enough to fit a single A4 page. */
@@ -180,6 +186,15 @@
   #tePhotoLightbox.show{ display:flex; }
   #tePhotoLightbox img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; box-shadow:0 10px 40px rgba(0,0,0,.5); cursor:default; }
   #tePhotoLightboxClose{ position:fixed; top:18px; right:24px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+  /* Screenshot crop modal — after a screen/window snap, drag-select the part to keep */
+  #teSnapCropOverlay{ position:fixed; inset:0; background:rgba(10,14,22,.94); display:none; flex-direction:column; z-index:95; }
+  #teSnapCropOverlay.show{ display:flex; }
+  .tsc-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; background:#161B24; flex-wrap:wrap; }
+  .tsc-hint{ color:#C7CDD8; font-size:12.5px; }
+  .tsc-stage{ flex:1; position:relative; display:flex; align-items:center; justify-content:center; overflow:auto; padding:16px; cursor:crosshair; }
+  .tsc-stage img{ max-width:100%; max-height:100%; user-select:none; -webkit-user-drag:none; display:block; }
+  #tscSelBox{ position:absolute; border:2px dashed #4F8CFF; background:rgba(79,140,255,.18); display:none; pointer-events:none; }
 
   /* Toll/parking receipts — hidden print page (batches of up to 5, one page each) */
   #teReceiptPrintRoot{ position:fixed; left:-9999px; top:0; }
@@ -704,6 +719,21 @@
   <div id="tePhotoLightbox">
     <div id="tePhotoLightboxClose">✕</div>
     <img id="tePhotoLightboxImg" src="">
+  </div>
+
+  <!-- Screenshot crop modal -->
+  <div id="teSnapCropOverlay">
+    <div class="tsc-toolbar">
+      <div class="tsc-hint">ลากเมาส์บนภาพเพื่อเลือกส่วนที่ต้องการ แล้วกด "ใช้รูปนี้" (ถ้าไม่เลือกส่วนไหน จะใช้ภาพเต็มที่จับมา)</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline" id="tscCancelBtn">ยกเลิก</button>
+        <button class="btn btn-blue" id="tscConfirmBtn">✓ ใช้รูปนี้</button>
+      </div>
+    </div>
+    <div class="tsc-stage" id="tscStage">
+      <img id="tscImg" src="" draggable="false">
+      <div id="tscSelBox"></div>
+    </div>
   </div>
 
   <!-- Print preview modal (screen only; @media print rules above show only #tePrintPage) -->
@@ -1461,6 +1491,7 @@
   async function teGetApi(id){ return await teApiGet({ action:'getTravelExpense', id }); }
   async function teSaveApi(expense){ return await apiPost({ action:'saveTravelExpense', expense }); }
   async function teDeleteApi(id){ return await apiPost({ action:'deleteTravelExpense', id }); }
+  async function teSetClaimedApi(id, claimed){ return await apiPost({ action:'setTravelClaimed', id, claimed }); }
 
   function teFillEmployeeSelect(){
     const sel = document.getElementById('teEmployee');
@@ -1526,17 +1557,19 @@
     if(teViewMode === 'list'){
       list.forEach(t=>{
         const row = document.createElement('div');
-        row.className = 'te-list-row';
+        row.className = 'te-list-row' + (t.claimed ? ' claimed' : '');
         row.innerHTML = `
           <div class="tlr-name">
             <div class="n1">${escapeHtml(t.employeeName||'-')}</div>
-            <div class="n2">${escapeHtml(t.companyName||t.jobNo||'-')}</div>
+            <div class="n2">${escapeHtml(t.companyName||'-')}${t.jobNo ? ' · Job ' + escapeHtml(t.jobNo) : ''}</div>
           </div>
           <div class="tlr-date">วันที่เดินทาง<b>${t.travelDate ? toThaiDate(t.travelDate) : '-'}</b></div>
           <div class="tlr-date">เดือน<b>${teMonthLabel(t.travelDate) || '-'}</b></div>
           <div class="tlr-amt">${(Number(t.total)||0).toLocaleString('th-TH',{minimumFractionDigits:2})} บาท</div>
+          <label class="tlr-claim"><input type="checkbox" ${t.claimed?'checked':''}><span>เบิกแล้ว</span></label>
           <div class="tlr-open">เปิดเอกสาร →</div>
         `;
+        teWireClaimCheckbox(row, t);
         row.addEventListener('click', ()=> teOpen(t.id));
         grid.appendChild(row);
       });
@@ -1544,18 +1577,44 @@
     }
     list.forEach(t=>{
       const card = document.createElement('div');
-      card.className = 'site-card';
+      card.className = 'site-card' + (t.claimed ? ' claimed' : '');
       card.innerHTML = `
         <div class="top-row">
-          <div><div class="sname">${escapeHtml(t.employeeName||'-')}</div><div class="sclient">${escapeHtml(t.companyName||t.jobNo||'-')}</div></div>
+          <div><div class="sname">${escapeHtml(t.employeeName||'-')}</div><div class="sclient">${escapeHtml(t.companyName||'-')}${t.jobNo ? ' · Job ' + escapeHtml(t.jobNo) : ''}</div></div>
           <div class="status-pill progress">${(Number(t.total)||0).toLocaleString('th-TH',{minimumFractionDigits:2})} บาท</div>
         </div>
         <div class="meta-line"><span>วันที่เดินทาง</span><b>${t.travelDate ? toThaiDate(t.travelDate) : '-'}</b></div>
         <div class="meta-line"><span>เดือน</span><b>${teMonthLabel(t.travelDate) || '-'}</b></div>
+        <div class="meta-line" style="border-top:none; padding-top:0;">
+          <label class="tlr-claim"><input type="checkbox" ${t.claimed?'checked':''}><span>เบิกแล้ว</span></label>
+        </div>
         <div class="open-btn">เปิดเอกสาร →</div>
       `;
+      teWireClaimCheckbox(card, t);
       card.addEventListener('click', ()=> teOpen(t.id));
       grid.appendChild(card);
+    });
+  }
+
+  // Wire up a "เบิกแล้ว" checkbox inside a list-row/card without triggering
+  // the row's own click-to-open handler, and persist the change immediately.
+  function teWireClaimCheckbox(itemEl, t){
+    const label = itemEl.querySelector('.tlr-claim');
+    const input = label.querySelector('input');
+    label.addEventListener('click', ev=> ev.stopPropagation());
+    input.addEventListener('change', async ()=>{
+      const checked = input.checked;
+      const prev = !!t.claimed;
+      t.claimed = checked;
+      itemEl.classList.toggle('claimed', checked);
+      try{
+        await teSetClaimedApi(t.id, checked);
+      }catch(e){
+        t.claimed = prev;
+        input.checked = prev;
+        itemEl.classList.toggle('claimed', prev);
+        alert('อัปเดตสถานะไม่สำเร็จ: ' + e.message);
+      }
     });
   }
 
@@ -1778,6 +1837,8 @@
       return null;
     }
     let stream;
+    // The browser's own picker here already lets the user choose ANY open
+    // screen, window, or tab to capture from (Entire Screen / Window / Tab).
     try{ stream = await navigator.mediaDevices.getDisplayMedia({ video:true }); }
     catch(e){ return null; }
     const video = document.createElement('video');
@@ -1788,7 +1849,92 @@
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
     stream.getTracks().forEach(t=>t.stop());
-    return canvas.toDataURL('image/jpeg', .85);
+    return canvas.toDataURL('image/jpeg', .95);
+  }
+
+  // Show a captured screenshot full-size and let the user drag-select (with the
+  // mouse) just the region they want to keep. Resolves to the cropped image, the
+  // full original image (if nothing was selected), or null (cancelled).
+  function teOpenCropModal(dataUrl){
+    return new Promise(resolve=>{
+      const overlay = document.getElementById('teSnapCropOverlay');
+      const img = document.getElementById('tscImg');
+      const stage = document.getElementById('tscStage');
+      const selBox = document.getElementById('tscSelBox');
+      const cancelBtn = document.getElementById('tscCancelBtn');
+      const confirmBtn = document.getElementById('tscConfirmBtn');
+
+      img.src = dataUrl;
+      selBox.style.display = 'none';
+      overlay.classList.add('show');
+
+      let sel = null, dragging = false;
+      const imgRect = ()=> img.getBoundingClientRect();
+
+      function updateBox(r){
+        const x = Math.min(sel.x0, sel.x1), y = Math.min(sel.y0, sel.y1);
+        const w = Math.abs(sel.x1 - sel.x0), h = Math.abs(sel.y1 - sel.y0);
+        selBox.style.left = x + 'px'; selBox.style.top = y + 'px';
+        selBox.style.width = w + 'px'; selBox.style.height = h + 'px';
+        selBox.style.display = (w > 3 && h > 3) ? 'block' : 'none';
+      }
+      function onDown(ev){
+        const r = imgRect();
+        if(ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
+        dragging = true;
+        sel = { x0: ev.clientX - r.left, y0: ev.clientY - r.top, x1: ev.clientX - r.left, y1: ev.clientY - r.top };
+        updateBox(r);
+        ev.preventDefault();
+      }
+      function onMove(ev){
+        if(!dragging) return;
+        const r = imgRect();
+        sel.x1 = Math.min(Math.max(ev.clientX - r.left, 0), r.width);
+        sel.y1 = Math.min(Math.max(ev.clientY - r.top, 0), r.height);
+        updateBox(r);
+      }
+      function onUp(){ dragging = false; }
+
+      function cleanup(){
+        stage.removeEventListener('mousedown', onDown);
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+        overlay.classList.remove('show');
+      }
+      function onCancel(){ cleanup(); resolve(null); }
+      function onConfirm(){
+        const r = imgRect();
+        const w = sel ? Math.abs(sel.x1 - sel.x0) : 0;
+        const h = sel ? Math.abs(sel.y1 - sel.y0) : 0;
+        if(sel && w > 6 && h > 6){
+          const scaleX = img.naturalWidth / r.width;
+          const scaleY = img.naturalHeight / r.height;
+          const sx = Math.min(sel.x0, sel.x1) * scaleX;
+          const sy = Math.min(sel.y0, sel.y1) * scaleY;
+          const sw = w * scaleX, sh = h * scaleY;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(sw); canvas.height = Math.round(sh);
+          const full = new Image();
+          full.onload = ()=>{
+            canvas.getContext('2d').drawImage(full, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            cleanup();
+            resolve(canvas.toDataURL('image/jpeg', .9));
+          };
+          full.src = dataUrl;
+          return;
+        }
+        cleanup();
+        resolve(dataUrl);
+      }
+
+      stage.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+    });
   }
 
   document.querySelectorAll('.te-photo-actions').forEach(row=>{
@@ -1810,8 +1956,11 @@
       } else if(action==='snap'){
         const original = btn.textContent; btn.textContent = 'กำลังจับภาพ...'; btn.disabled = true;
         try{
-          const dataUrl = await teCaptureScreen();
-          if(dataUrl){ tePhotos[slot] = dataUrl; tePhotosChanged.add(slot); teRenderPhotoSlot(slot); }
+          const rawDataUrl = await teCaptureScreen();
+          if(rawDataUrl){
+            const cropped = await teOpenCropModal(rawDataUrl);
+            if(cropped){ tePhotos[slot] = cropped; tePhotosChanged.add(slot); teRenderPhotoSlot(slot); }
+          }
         } finally { btn.textContent = original; btn.disabled = false; }
       }
     });
