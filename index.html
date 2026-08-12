@@ -121,7 +121,7 @@
   /* Print/export replica of the official "แบบขออนุมัติเบิกค่าเดินทาง" template —
      black text only, compact enough to fit a single A4 page. */
   #tePrintRoot{ position:fixed; left:-9999px; top:0; }
-  #tePrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:16px 22px; box-sizing:border-box; overflow:hidden; }
+  #tePrintPage{ width:794px; height:1080px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:16px 16px; box-sizing:border-box; overflow:hidden; }
   #tePrintPage table{ border-collapse:collapse; width:100%; table-layout:fixed; }
   #tePrintPage .tep-header{ display:flex; align-items:center; gap:14px; }
   #tePrintPage .tep-header img{ height:46px; width:auto; }
@@ -151,7 +151,7 @@
   #tePrintPage .tep-textamt{ background:#BFBFBF; text-align:center; font-size:11px; padding:3px; border:1px solid #000; box-sizing:border-box; width:100%; }
   #tePrintPage .tep-photos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
   #tePrintPage .tep-photo-col{ display:flex; flex-direction:column; gap:8px; }
-  #tePrintPage .tep-photo-box{ border:1px solid #000; height:225px; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:9px; color:#999; }
+  #tePrintPage .tep-photo-box{ border:1px solid #000; height:272px; display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:9px; color:#999; }
   #tePrintPage .tep-photo-box img{ width:100%; height:100%; object-fit:cover; }
   #tePrintPage .tep-footer{ margin-top:8px; }
   #tePrintPage .tep-footer div{ color:#000; font-size:7.6px; line-height:1.45; }
@@ -2079,7 +2079,7 @@
     await teLayoutReceiptGrid(grid, batch, type);
     document.getElementById('teReceiptPageNum').textContent = pageNum;
     const page = document.getElementById('teReceiptPrintPage');
-    const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+    const canvas = await html2canvas(page, { scale:3, useCORS:true, backgroundColor:'#ffffff' });
     return canvas;
   }
 
@@ -2102,7 +2102,7 @@
     try{
       const { emp, dateVal } = tePopulatePrintPage();
       const page = document.getElementById('tePrintPage');
-      const canvas = await html2canvas(page, { scale:2, useCORS:true, backgroundColor:'#ffffff' });
+      const canvas = await html2canvas(page, { scale:3, useCORS:true, backgroundColor:'#ffffff' });
       const imgData = canvas.toDataURL('image/jpeg', .95);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p','mm','a4');
