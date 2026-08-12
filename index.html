@@ -724,7 +724,7 @@
   <!-- Screenshot crop modal -->
   <div id="teSnapCropOverlay">
     <div class="tsc-toolbar">
-      <div class="tsc-hint">ลากเมาส์บนภาพเพื่อเลือกส่วนที่ต้องการ แล้วกด "ใช้รูปนี้" (ถ้าไม่เลือกส่วนไหน จะใช้ภาพเต็มที่จับมา)</div>
+      <div class="tsc-hint">กรอบประคือส่วนที่จะถูกใช้ (เริ่มต้นคือภาพเต็ม) — ลากเมาส์เพื่อปรับเฉพาะส่วนที่ต้องการ แล้วกด "ใช้รูปนี้"</div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-outline" id="tscCancelBtn">ยกเลิก</button>
         <button class="btn btn-blue" id="tscConfirmBtn">✓ ใช้รูปนี้</button>
@@ -1864,12 +1864,23 @@
       const cancelBtn = document.getElementById('tscCancelBtn');
       const confirmBtn = document.getElementById('tscConfirmBtn');
 
-      img.src = dataUrl;
       selBox.style.display = 'none';
       overlay.classList.add('show');
 
       let sel = null, dragging = false;
       const imgRect = ()=> img.getBoundingClientRect();
+
+      // Default the selection to the FULL captured frame (visibly outlined) so
+      // it's obvious exactly what will be used if the user doesn't drag —
+      // instead of silently using the whole (possibly letterboxed) capture.
+      function selectFullFrame(){
+        const r = imgRect();
+        sel = { x0: 0, y0: 0, x1: r.width, y1: r.height };
+        updateBox(r);
+      }
+      img.onload = selectFullFrame;
+      img.src = dataUrl;
+      if(img.complete && img.naturalWidth) selectFullFrame();
 
       function updateBox(r){
         const x = Math.min(sel.x0, sel.x1), y = Math.min(sel.y0, sel.y1);
