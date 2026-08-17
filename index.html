@@ -1608,7 +1608,8 @@
     // Non-admin accounts can only create/manage their own travel-expense
     // documents — lock the picker to their linked employee.
     if(teIsLoggedIn() && !teIsAdmin()){
-      const idx = TE_EMPLOYEES.findIndex(x=>x.code===teSession.employeeCode);
+      const myCode = String(teSession.employeeCode||'').trim();
+      const idx = TE_EMPLOYEES.findIndex(x=>String(x.code).trim()===myCode);
       if(idx>=0){ sel.selectedIndex = idx; }
       sel.disabled = true;
     } else {
@@ -1993,7 +1994,7 @@
       let t = null;
       try{ t = await teGetApi(id); }catch(e){ alert('โหลดเอกสารไม่สำเร็จ: ' + e.message); return; }
       if(!t){ alert('ไม่พบเอกสารนี้'); return; }
-      if(!teIsAdmin() && t.employeeCode && t.employeeCode !== teSession.employeeCode){
+      if(!teIsAdmin() && t.employeeCode && String(t.employeeCode).trim() !== String(teSession.employeeCode||'').trim()){
         alert('คุณไม่มีสิทธิ์ดูเอกสารนี้');
         return;
       }
