@@ -853,20 +853,23 @@
       <h3>จัดการผู้ใช้งาน — ค่าเดินทาง</h3>
       <div class="te-users-list" id="teUsersList"></div>
       <hr style="margin:16px 0; border:none; border-top:1px solid var(--line);">
-      <h4>สร้างผู้ใช้งานใหม่</h4>
+      <h4 id="tnuFormTitle">สร้างผู้ใช้งานใหม่</h4>
       <div class="field"><label>Username</label><input type="text" id="tnuUsername"></div>
-      <div class="field"><label>Password</label><input type="password" id="tnuPassword"></div>
+      <div class="field"><label id="tnuPasswordLabel">Password</label><input type="password" id="tnuPassword" placeholder=""></div>
       <div class="field"><label>ผูกกับพนักงาน (สำหรับกรองรายการของตัวเอง)</label>
         <select id="tnuEmployee"></select>
       </div>
       <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; margin:2px 0 12px;">
         <input type="checkbox" id="tnuIsAdmin" style="width:auto;"> ให้เป็นผู้ดูแลระบบ (เห็นข้อมูลของทุกคน)
       </label>
-      <div class="field"><label>รหัสผ่านของคุณ (ยืนยันตัวตนก่อนสร้างผู้ใช้ใหม่)</label><input type="password" id="tnuAdminPassword"></div>
+      <div class="field"><label id="tnuAdminPwLabel">รหัสผ่านของคุณ (ยืนยันตัวตนก่อนสร้างผู้ใช้ใหม่)</label><input type="password" id="tnuAdminPassword"></div>
       <div class="te-auth-error" id="tnuError"></div>
-      <div class="row">
-        <button class="btn btn-outline" id="tuCloseBtn">ปิด</button>
-        <button class="btn btn-blue" id="tnuCreateBtn">+ สร้างผู้ใช้งาน</button>
+      <div class="row" style="justify-content:space-between;">
+        <button class="btn btn-outline" id="tnuCancelEditBtn" style="display:none;">ยกเลิกแก้ไข</button>
+        <div style="display:flex; gap:8px; margin-left:auto;">
+          <button class="btn btn-outline" id="tuCloseBtn">ปิด</button>
+          <button class="btn btn-blue" id="tnuCreateBtn">+ สร้างผู้ใช้งาน</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1592,6 +1595,9 @@
   async function teAuthCreateUserApi(adminUsername, adminPassword, newUser){
     return await apiPost({ action:'teAuthCreateUser', adminUsername, adminPassword, newUser });
   }
+  async function teAuthUpdateUserApi(adminUsername, adminPassword, targetUsername, updates){
+    return await apiPost({ action:'teAuthUpdateUser', adminUsername, adminPassword, targetUsername, updates });
+  }
   async function teAuthListUsersApi(requesterUsername){
     return await teApiGet({ action:'teAuthListUsers', requesterUsername });
   }
@@ -1721,12 +1727,10 @@
   });
 
   // ---- admin: manage users ----
-  document.getElementById('teAuthManageUsersBtn').addEventListener('click', async ()=>{
-    document.getElementById('tnuUsername').value = '';
-    document.getElementById('tnuPassword').value = '';
-    document.getElementById('tnuIsAdmin').checked = false;
-    document.getElementById('tnuAdminPassword').value = '';
-    document.getElementById('tnuError').textContent = '';
+  // ---- admin: manage users (create + edit existing) ----
+  let teEditingUsername = null; // null = create-new mode; otherwise editing this username
+
+  function teFillUserEmployeeSelect(){
     const empSel = document.getElementById('tnuEmployee');
     if(!empSel.options.length){
       TE_EMPLOYEES.forEach((emp,i)=>{
@@ -1735,9 +1739,48 @@
         empSel.appendChild(opt);
       });
     }
+  }
+
+  function teResetUserForm(){
+    teEditingUsername = null;
+    document.getElementById('tnuFormTitle').textContent = 'สร้างผู้ใช้งานใหม่';
+    document.getElementById('tnuUsername').value = '';
+    document.getElementById('tnuUsername').disabled = false;
+    document.getElementById('tnuPassword').value = '';
+    document.getElementById('tnuPasswordLabel').textContent = 'Password';
+    document.getElementById('tnuPassword').placeholder = '';
+    document.getElementById('tnuIsAdmin').checked = false;
+    document.getElementById('tnuAdminPassword').value = '';
+    document.getElementById('tnuAdminPwLabel').textContent = 'รหัสผ่านของคุณ (ยืนยันตัวตนก่อนสร้างผู้ใช้ใหม่)';
+    document.getElementById('tnuError').textContent = '';
+    document.getElementById('tnuEmployee').selectedIndex = 0;
+    document.getElementById('tnuCreateBtn').textContent = '+ สร้างผู้ใช้งาน';
+    document.getElementById('tnuCancelEditBtn').style.display = 'none';
+  }
+
+  function teEnterEditUserMode(u){
+    teEditingUsername = u.username;
+    document.getElementById('tnuFormTitle').textContent = 'แก้ไขผู้ใช้งาน: ' + u.username;
+    document.getElementById('tnuUsername').value = u.username;
+    document.getElementById('tnuUsername').disabled = false;
+    document.getElementById('tnuPassword').value = '';
+    document.getElementById('tnuPasswordLabel').textContent = 'รหัสผ่านใหม่';
+    document.getElementById('tnuPassword').placeholder = 'เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยนรหัสผ่าน';
+    document.getElementById('tnuIsAdmin').checked = u.role === 'admin';
+    document.getElementById('tnuAdminPassword').value = '';
+    document.getElementById('tnuAdminPwLabel').textContent = 'รหัสผ่านของคุณ (ยืนยันตัวตนก่อนบันทึกการแก้ไข)';
+    document.getElementById('tnuError').textContent = '';
+    const empSel = document.getElementById('tnuEmployee');
+    const idx = TE_EMPLOYEES.findIndex(x=>String(x.code).trim()===String(u.employeeCode||'').trim());
+    empSel.selectedIndex = idx>=0 ? idx : 0;
+    document.getElementById('tnuCreateBtn').textContent = 'บันทึกการแก้ไข';
+    document.getElementById('tnuCancelEditBtn').style.display = '';
+    document.getElementById('tnuUsername').scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  async function teLoadUsersList(){
     const listEl = document.getElementById('teUsersList');
     listEl.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--muted);">กำลังโหลด...</div>';
-    document.getElementById('teUsersOverlay').classList.add('show');
     try{
       const users = await teAuthListUsersApi(teSession.username);
       if(!Array.isArray(users)){ listEl.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--red);">โหลดรายชื่อไม่สำเร็จ</div>'; return; }
@@ -1745,14 +1788,24 @@
       users.forEach(u=>{
         const row = document.createElement('div');
         row.className = 'te-users-row';
-        row.innerHTML = `<div><div class="u1">${escapeHtml(u.username)}</div><div class="u2">${escapeHtml(u.employeeName||'-')}</div></div><div class="u2">${u.role==='admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}</div>`;
+        row.innerHTML = `<div><div class="u1">${escapeHtml(u.username)}</div><div class="u2">${escapeHtml(u.employeeName||'-')}</div></div><div style="display:flex; align-items:center; gap:8px;"><span class="u2">${u.role==='admin' ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งาน'}</span><button type="button" class="btn btn-outline" style="font-size:11px; padding:4px 9px;" data-edit-user="${escapeHtml(u.username)}">แก้ไข</button></div>`;
+        row.querySelector('[data-edit-user]').addEventListener('click', ()=> teEnterEditUserMode(u));
         listEl.appendChild(row);
       });
     }catch(e){ listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--red);">โหลดรายชื่อไม่สำเร็จ: ${escapeHtml(e.message)}</div>`; }
+  }
+
+  document.getElementById('teAuthManageUsersBtn').addEventListener('click', async ()=>{
+    teFillUserEmployeeSelect();
+    teResetUserForm();
+    document.getElementById('teUsersOverlay').classList.add('show');
+    await teLoadUsersList();
   });
   document.getElementById('tuCloseBtn').addEventListener('click', ()=>{
     document.getElementById('teUsersOverlay').classList.remove('show');
   });
+  document.getElementById('tnuCancelEditBtn').addEventListener('click', teResetUserForm);
+
   document.getElementById('tnuCreateBtn').addEventListener('click', async ()=>{
     const btn = document.getElementById('tnuCreateBtn'); const original = btn.textContent;
     const errEl = document.getElementById('tnuError');
@@ -1763,18 +1816,46 @@
     const emp = TE_EMPLOYEES.find(x=>x.code === empSel.value) || TE_EMPLOYEES[0];
     const isAdmin = document.getElementById('tnuIsAdmin').checked;
     const adminPassword = document.getElementById('tnuAdminPassword').value;
-    if(!username || !password){ errEl.textContent = 'กรุณากรอก Username และ Password'; return; }
+    if(!username){ errEl.textContent = 'กรุณากรอก Username'; return; }
     if(!adminPassword){ errEl.textContent = 'กรุณากรอกรหัสผ่านของคุณเพื่อยืนยันตัวตน'; return; }
-    btn.textContent = 'กำลังสร้าง...'; btn.disabled = true;
-    try{
-      const res = await teAuthCreateUserApi(teSession.username, adminPassword, {
-        username, password, role: isAdmin ? 'admin' : 'user',
-        employeeCode: emp.code, employeeName: emp.name
-      });
-      if(!res.ok){ errEl.textContent = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; return; }
-      document.getElementById('teAuthManageUsersBtn').click();
-    }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; }
-    finally{ btn.textContent = original; btn.disabled = false; }
+    const editing = teEditingUsername;
+
+    if(editing){
+      // ---- update existing user ----
+      btn.textContent = 'กำลังบันทึก...'; btn.disabled = true;
+      try{
+        const updates = {
+          username, role: isAdmin ? 'admin' : 'user',
+          employeeCode: emp.code, employeeName: emp.name
+        };
+        if(password) updates.password = password;
+        const res = await teAuthUpdateUserApi(teSession.username, adminPassword, editing, updates);
+        if(!res.ok){ errEl.textContent = res.error || 'บันทึกการแก้ไขไม่สำเร็จ'; btn.textContent = original; btn.disabled = false; return; }
+        // If the admin just renamed/edited their own account, refresh the local session too.
+        if(editing.toLowerCase() === teSession.username.toLowerCase()){
+          teSession = { username, role: isAdmin ? 'admin' : 'user', employeeCode: emp.code, employeeName: emp.name };
+          localStorage.setItem(TE_AUTH_KEY, JSON.stringify(teSession));
+          teRenderAuthUI();
+        }
+        teResetUserForm();
+        btn.disabled = false;
+        await teLoadUsersList();
+      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; btn.textContent = original; btn.disabled = false; }
+    } else {
+      // ---- create new user ----
+      if(!password){ errEl.textContent = 'กรุณากรอก Password'; return; }
+      btn.textContent = 'กำลังสร้าง...'; btn.disabled = true;
+      try{
+        const res = await teAuthCreateUserApi(teSession.username, adminPassword, {
+          username, password, role: isAdmin ? 'admin' : 'user',
+          employeeCode: emp.code, employeeName: emp.name
+        });
+        if(!res.ok){ errEl.textContent = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; btn.textContent = original; btn.disabled = false; return; }
+        teResetUserForm();
+        btn.disabled = false;
+        await teLoadUsersList();
+      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; btn.textContent = original; btn.disabled = false; }
+    }
   });
 
   document.getElementById('teEmployeeFilterSelect').addEventListener('change', teRefreshList);
