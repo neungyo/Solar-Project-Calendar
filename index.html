@@ -1830,7 +1830,7 @@
         };
         if(password) updates.password = password;
         const res = await teAuthUpdateUserApi(teSession.username, adminPassword, editing, updates);
-        if(!res.ok){ errEl.textContent = res.error || 'บันทึกการแก้ไขไม่สำเร็จ'; btn.textContent = original; btn.disabled = false; return; }
+        if(!res.ok){ const msg = res.error || 'บันทึกการแก้ไขไม่สำเร็จ'; errEl.textContent = msg; alert('บันทึกการแก้ไขไม่สำเร็จ: ' + msg); btn.textContent = original; btn.disabled = false; return; }
         // If the admin just renamed/edited their own account, refresh the local session too.
         if(editing.toLowerCase() === teSession.username.toLowerCase()){
           teSession = { username, role: isAdmin ? 'admin' : 'user', employeeCode: emp.code, employeeName: emp.name };
@@ -1840,7 +1840,7 @@
         teResetUserForm();
         btn.disabled = false;
         await teLoadUsersList();
-      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; btn.textContent = original; btn.disabled = false; }
+      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; alert('เชื่อมต่อไม่สำเร็จ: ' + e.message); btn.textContent = original; btn.disabled = false; }
     } else {
       // ---- create new user ----
       if(!password){ errEl.textContent = 'กรุณากรอก Password'; return; }
@@ -1850,11 +1850,11 @@
           username, password, role: isAdmin ? 'admin' : 'user',
           employeeCode: emp.code, employeeName: emp.name
         });
-        if(!res.ok){ errEl.textContent = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; btn.textContent = original; btn.disabled = false; return; }
+        if(!res.ok){ const msg = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; errEl.textContent = msg; alert('สร้างผู้ใช้งานไม่สำเร็จ: ' + msg); btn.textContent = original; btn.disabled = false; return; }
         teResetUserForm();
         btn.disabled = false;
         await teLoadUsersList();
-      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; btn.textContent = original; btn.disabled = false; }
+      }catch(e){ errEl.textContent = 'เชื่อมต่อไม่สำเร็จ: ' + e.message; alert('เชื่อมต่อไม่สำเร็จ: ' + e.message); btn.textContent = original; btn.disabled = false; }
     }
   });
 
