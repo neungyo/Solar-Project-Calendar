@@ -856,9 +856,10 @@
       <h4 id="tnuFormTitle">สร้างผู้ใช้งานใหม่</h4>
       <div class="field"><label>Username</label><input type="text" id="tnuUsername"></div>
       <div class="field"><label id="tnuPasswordLabel">Password</label><input type="password" id="tnuPassword" placeholder=""></div>
-      <div class="field"><label>ผูกกับพนักงาน (สำหรับกรองรายการของตัวเอง)</label>
+      <div class="field"><label>ผูกกับพนักงาน (เลือกจากรายชื่อเดิม หรือเพิ่มพนักงานใหม่เอง)</label>
         <select id="tnuEmployee"></select>
       </div>
+      <div class="field"><label>ชื่อ-นามสกุลพนักงาน</label><input type="text" id="tnuEmployeeName" placeholder="เช่น นายทดสอบ ระบบ"></div>
       <div class="field"><label>รหัสพนักงาน</label><input type="text" id="tnuEmployeeCode" placeholder="เช่น 05405"></div>
       <div class="field"><label>ตำแหน่ง</label><input type="text" id="tnuPosition" placeholder="เช่น Site Engineer, Senior Officer"></div>
       <div class="field"><label>ทะเบียนรถ</label><input type="text" id="tnuPlate" placeholder="เช่น กข-1234 กรุงเทพมหานคร"></div>
@@ -1759,24 +1760,58 @@
   // ---- admin: manage users (create + edit existing) ----
   let teEditingUsername = null; // null = create-new mode; otherwise editing this username
 
+  // Every employee this browser currently knows about: the 5 built-in ones
+  // (TE_EMPLOYEES, with any saved overrides applied) plus anyone who was ever
+  // typed in as "+ เพิ่มพนักงานใหม่" and saved — so the list grows as new hires
+  // get their own accounts, without ever needing to edit the app's source code.
+  let teKnownEmpList = [];
+  function teAllKnownEmployees_(){
+    const map = {};
+    TE_EMPLOYEES.forEach(e=>{ map[e.name] = teGetEmp_(e); });
+    Object.keys(TE_EMP_OVERRIDES).forEach(name=>{
+      if(!map[name]){
+        const ov = TE_EMP_OVERRIDES[name];
+        map[name] = { name, code: ov.code || '', position: ov.position || '', plate: ov.plate || '' };
+      }
+    });
+    return Object.values(map);
+  }
+
   function teFillUserEmployeeSelect(){
     const empSel = document.getElementById('tnuEmployee');
-    if(!empSel.options.length){
-      TE_EMPLOYEES.forEach((emp,i)=>{
-        const opt = document.createElement('option');
-        opt.value = emp.code; opt.textContent = emp.name;
-        empSel.appendChild(opt);
-      });
+    teKnownEmpList = teAllKnownEmployees_();
+    empSel.innerHTML = '';
+    teKnownEmpList.forEach((emp,i)=>{
+      const opt = document.createElement('option');
+      opt.value = String(i); opt.textContent = emp.name;
+      empSel.appendChild(opt);
+    });
+    const customOpt = document.createElement('option');
+    customOpt.value = '__custom__';
+    customOpt.textContent = '+ เพิ่มพนักงานใหม่ (พิมพ์เอง)';
+    empSel.appendChild(customOpt);
+    if(!empSel.dataset.wired){
       empSel.addEventListener('change', teApplyUserEmployeeDefaults_);
+      empSel.dataset.wired = '1';
     }
   }
-  // Fills the รหัสพนักงาน/ตำแหน่ง/ทะเบียนรถ fields with the current values for
-  // whichever employee name is selected (an existing override if one has been
+  // Fills the ชื่อ/รหัสพนักงาน/ตำแหน่ง/ทะเบียนรถ fields with the current values
+  // for whichever employee is selected (an existing override if one has been
   // saved before, otherwise the built-in default) — still fully editable after.
+  // Selecting "+ เพิ่มพนักงานใหม่" clears all four fields for typing from scratch.
   function teApplyUserEmployeeDefaults_(){
     const empSel = document.getElementById('tnuEmployee');
-    const base = TE_EMPLOYEES.find(x=>x.code===empSel.value) || TE_EMPLOYEES[0];
-    const emp = teGetEmp_(base);
+    if(empSel.value === '__custom__'){
+      document.getElementById('tnuEmployeeName').value = '';
+      document.getElementById('tnuEmployeeCode').value = '';
+      document.getElementById('tnuPosition').value = '';
+      document.getElementById('tnuPlate').value = '';
+      document.getElementById('tnuEmployeeName').focus();
+      return;
+    }
+    const emp = teKnownEmpList[Number(empSel.value)] || teKnownEmpList[0];
+    if(!emp) return;
+    document.getElementById('tnuEmployeeName').value = emp.name || '';
     document.getElementById('tnuEmployeeCode').value = emp.code || '';
     document.getElementById('tnuPosition').value = emp.position || '';
     document.getElementById('tnuPlate').value = emp.plate || '';
@@ -1794,6 +1829,7 @@
     document.getElementById('tnuAdminPassword').value = '';
     document.getElementById('tnuAdminPwLabel').textContent = 'รหัสผ่านของคุณ (ยืนยันตัวตนก่อนสร้างผู้ใช้ใหม่)';
     document.getElementById('tnuError').textContent = '';
+    teFillUserEmployeeSelect();
     document.getElementById('tnuEmployee').selectedIndex = 0;
     teApplyUserEmployeeDefaults_();
     document.getElementById('tnuCreateBtn').textContent = '+ สร้างผู้ใช้งาน';
@@ -1812,10 +1848,11 @@
     document.getElementById('tnuAdminPassword').value = '';
     document.getElementById('tnuAdminPwLabel').textContent = 'รหัสผ่านของคุณ (ยืนยันตัวตนก่อนบันทึกการแก้ไข)';
     document.getElementById('tnuError').textContent = '';
+    teFillUserEmployeeSelect();
     const empSel = document.getElementById('tnuEmployee');
-    let idx = TE_EMPLOYEES.findIndex(x=>x.name===u.employeeName);
-    if(idx<0) idx = TE_EMPLOYEES.findIndex(x=>String(x.code).trim()===String(u.employeeCode||'').trim());
-    empSel.selectedIndex = idx>=0 ? idx : 0;
+    const idx = teKnownEmpList.findIndex(x=>x.name===u.employeeName);
+    empSel.value = idx>=0 ? String(idx) : '__custom__';
+    document.getElementById('tnuEmployeeName').value = u.employeeName || '';
     document.getElementById('tnuEmployeeCode').value = u.employeeCode || '';
     document.getElementById('tnuPosition').value = u.employeePosition || '';
     document.getElementById('tnuPlate').value = u.employeePlate || '';
@@ -1859,14 +1896,14 @@
     errEl.textContent = '';
     const username = document.getElementById('tnuUsername').value.trim();
     const password = document.getElementById('tnuPassword').value;
-    const empSel = document.getElementById('tnuEmployee');
-    const emp = TE_EMPLOYEES.find(x=>x.code === empSel.value) || TE_EMPLOYEES[0];
     const isAdmin = document.getElementById('tnuIsAdmin').checked;
     const adminPassword = document.getElementById('tnuAdminPassword').value;
-    const employeeCodeVal = document.getElementById('tnuEmployeeCode').value.trim() || emp.code;
+    const employeeNameVal = document.getElementById('tnuEmployeeName').value.trim();
+    const employeeCodeVal = document.getElementById('tnuEmployeeCode').value.trim();
     const positionVal = document.getElementById('tnuPosition').value.trim();
     const plateVal = document.getElementById('tnuPlate').value.trim();
     if(!username){ errEl.textContent = 'กรุณากรอก Username'; return; }
+    if(!employeeNameVal){ errEl.textContent = 'กรุณาระบุชื่อ-นามสกุลพนักงาน'; return; }
     if(!adminPassword){ errEl.textContent = 'กรุณากรอกรหัสผ่านของคุณเพื่อยืนยันตัวตน'; return; }
     const editing = teEditingUsername;
 
@@ -1876,16 +1913,16 @@
       try{
         const updates = {
           username, role: isAdmin ? 'admin' : 'user',
-          employeeCode: employeeCodeVal, employeeName: emp.name,
+          employeeCode: employeeCodeVal, employeeName: employeeNameVal,
           employeePosition: positionVal, employeePlate: plateVal
         };
         if(password) updates.password = password;
         const res = await teAuthUpdateUserApi(teSession.username, adminPassword, editing, updates);
         if(!res.ok){ const msg = res.error || 'บันทึกการแก้ไขไม่สำเร็จ'; errEl.textContent = msg; alert('บันทึกการแก้ไขไม่สำเร็จ: ' + msg); btn.textContent = original; btn.disabled = false; return; }
-        teApplyOverrideFromUser_({ employeeName: emp.name, employeeCode: employeeCodeVal, employeePosition: positionVal, employeePlate: plateVal });
+        teApplyOverrideFromUser_({ employeeName: employeeNameVal, employeeCode: employeeCodeVal, employeePosition: positionVal, employeePlate: plateVal });
         // If the admin just renamed/edited their own account, refresh the local session too.
         if(editing.toLowerCase() === teSession.username.toLowerCase()){
-          teSession = { username, role: isAdmin ? 'admin' : 'user', employeeCode: employeeCodeVal, employeeName: emp.name, employeePosition: positionVal, employeePlate: plateVal };
+          teSession = { username, role: isAdmin ? 'admin' : 'user', employeeCode: employeeCodeVal, employeeName: employeeNameVal, employeePosition: positionVal, employeePlate: plateVal };
           localStorage.setItem(TE_AUTH_KEY, JSON.stringify(teSession));
           teRenderAuthUI();
         }
@@ -1900,11 +1937,11 @@
       try{
         const res = await teAuthCreateUserApi(teSession.username, adminPassword, {
           username, password, role: isAdmin ? 'admin' : 'user',
-          employeeCode: employeeCodeVal, employeeName: emp.name,
+          employeeCode: employeeCodeVal, employeeName: employeeNameVal,
           employeePosition: positionVal, employeePlate: plateVal
         });
         if(!res.ok){ const msg = res.error || 'สร้างผู้ใช้งานไม่สำเร็จ'; errEl.textContent = msg; alert('สร้างผู้ใช้งานไม่สำเร็จ: ' + msg); btn.textContent = original; btn.disabled = false; return; }
-        teApplyOverrideFromUser_({ employeeName: emp.name, employeeCode: employeeCodeVal, employeePosition: positionVal, employeePlate: plateVal });
+        teApplyOverrideFromUser_({ employeeName: employeeNameVal, employeeCode: employeeCodeVal, employeePosition: positionVal, employeePlate: plateVal });
         teResetUserForm();
         btn.disabled = false;
         await teLoadUsersList();
