@@ -1601,7 +1601,12 @@
   let teLoaded = false;
 
   async function teApiGet(params){ return await apiGet(params); }
-  async function teListApi(employeeCode){ return await teApiGet(employeeCode ? { action:'listTravelExpenses', employeeCode } : { action:'listTravelExpenses' }); }
+  async function teListApi(employeeCode, employeeName){
+    const params = { action:'listTravelExpenses' };
+    if(employeeCode) params.employeeCode = employeeCode;
+    if(employeeName) params.employeeName = employeeName;
+    return await teApiGet(params);
+  }
   async function teGetApi(id){ return await teApiGet({ action:'getTravelExpense', id }); }
   async function teSaveApi(expense){ return await apiPost({ action:'saveTravelExpense', expense }); }
   async function teDeleteApi(id){ return await apiPost({ action:'deleteTravelExpense', id }); }
@@ -1630,22 +1635,41 @@
     return await teApiGet({ action:'teAuthListUsers', requesterUsername });
   }
 
+  // Merged employee list used to populate this dropdown — built-ins
+  // (TE_EMPLOYEES) plus anyone added later purely as a user account via
+  // "+ เพิ่มพนักงานใหม่" in จัดการผู้ใช้งาน. Rebuilt every time so newly added
+  // people show up without a page reload.
+  let teEmpList = [];
+  function teRefreshEmpList_(){
+    teEmpList = teAllKnownEmployees_();
+    return teEmpList;
+  }
+
   function teFillEmployeeSelect(){
     const sel = document.getElementById('teEmployee');
-    if(!sel.options.length){
-      TE_EMPLOYEES.forEach((emp,i)=>{
-        const opt = document.createElement('option');
-        opt.value = i; opt.textContent = emp.name;
-        sel.appendChild(opt);
-      });
-    }
+    teRefreshEmpList_();
+    sel.innerHTML = '';
+    teEmpList.forEach((emp,i)=>{
+      const opt = document.createElement('option');
+      opt.value = String(i); opt.textContent = emp.name;
+      sel.appendChild(opt);
+    });
     // Non-admin accounts can only create/manage their own travel-expense
     // documents — lock the picker to their linked employee.
     if(teIsLoggedIn() && !teIsAdmin()){
-      const myCode = String(teSession.employeeCode||'').trim();
-      let idx = TE_EMPLOYEES.findIndex(x=>x.name===teSession.employeeName);
-      if(idx<0) idx = TE_EMPLOYEES.findIndex(x=>String(x.code).trim()===myCode);
-      if(idx>=0){ sel.selectedIndex = idx; }
+      let idx = teEmpList.findIndex(x=>x.name===teSession.employeeName);
+      if(idx<0){
+        // Defensive fallback: this account's identity should always have been
+        // seeded into teEmpList via teApplyOverrideFromUser_ at login, but if
+        // it's somehow missing, add it now rather than silently showing/saving
+        // someone else's name.
+        teEmpList.push({ name: teSession.employeeName, code: teSession.employeeCode||'', position: teSession.employeePosition||'', plate: teSession.employeePlate||'' });
+        idx = teEmpList.length - 1;
+        const opt = document.createElement('option');
+        opt.value = String(idx); opt.textContent = teSession.employeeName;
+        sel.appendChild(opt);
+      }
+      sel.selectedIndex = idx;
       sel.disabled = true;
     } else {
       sel.disabled = false;
@@ -1654,12 +1678,17 @@
 
   function teFillEmployeeFilterSelect(){
     const sel = document.getElementById('teEmployeeFilterSelect');
-    if(sel.options.length > 1) return;
-    TE_EMPLOYEES.forEach(emp=>{
+    const prevValue = sel.value;
+    sel.innerHTML = '<option value="">ทุกคน</option>';
+    teAllKnownEmployees_().forEach((emp,i)=>{
       const opt = document.createElement('option');
-      opt.value = emp.code; opt.textContent = emp.name;
+      opt.value = 'emp' + i;
+      opt.textContent = emp.name;
+      opt.dataset.code = emp.code || '';
+      opt.dataset.name = emp.name || '';
       sel.appendChild(opt);
     });
+    if(prevValue){ sel.value = prevValue; }
   }
 
   function teRenderAuthUI(){
@@ -1904,6 +1933,7 @@
     const plateVal = document.getElementById('tnuPlate').value.trim();
     if(!username){ errEl.textContent = 'กรุณากรอก Username'; return; }
     if(!employeeNameVal){ errEl.textContent = 'กรุณาระบุชื่อ-นามสกุลพนักงาน'; return; }
+    if(!employeeCodeVal){ errEl.textContent = 'กรุณาระบุรหัสพนักงาน (ใช้สำหรับกรองรายการของแต่ละคน)'; return; }
     if(!adminPassword){ errEl.textContent = 'กรุณากรอกรหัสผ่านของคุณเพื่อยืนยันตัวตน'; return; }
     const editing = teEditingUsername;
 
@@ -1952,7 +1982,7 @@
   document.getElementById('teEmployeeFilterSelect').addEventListener('change', teRefreshList);
   function teUpdateEmployeeInfo(){
     const sel = document.getElementById('teEmployee');
-    const emp = teGetEmp_(TE_EMPLOYEES[sel.value] || TE_EMPLOYEES[0]);
+    const emp = teEmpList[sel.value] || teEmpList[0];
     document.getElementById('teEmployeeInfo').innerHTML =
       `รหัส <b>${escapeHtml(emp.code)}</b> · ${escapeHtml(emp.position)} · ทะเบียนรถ ${emp.plate ? escapeHtml(emp.plate) : '(ยังไม่ระบุ)'}`;
   }
@@ -2068,10 +2098,21 @@
 
   async function teRefreshList(){
     if(!teIsLoggedIn()){ teExpenses = []; teRenderGrid(); return; }
-    // Non-admin accounts are always locked to their own employeeCode. Admin can
-    // optionally narrow the list down via the employee filter dropdown.
-    const filterCode = teIsAdmin() ? (document.getElementById('teEmployeeFilterSelect').value || '') : teSession.employeeCode;
-    try{ teExpenses = await teListApi(filterCode); if(!Array.isArray(teExpenses)) teExpenses = []; }
+    // Non-admin accounts are always locked to their own identity. Admin can
+    // optionally narrow the list down via the employee filter dropdown. Both
+    // code and name are sent — code is the precise match, name is a fallback
+    // for accounts that don't have a code set (e.g. a newly typed-in employee).
+    let filterCode = '', filterName = '';
+    if(teIsAdmin()){
+      const filterSel = document.getElementById('teEmployeeFilterSelect');
+      const opt = filterSel.options[filterSel.selectedIndex];
+      filterCode = (opt && opt.dataset.code) || '';
+      filterName = (opt && opt.dataset.name) || '';
+    } else {
+      filterCode = teSession.employeeCode || '';
+      filterName = teSession.employeeName || '';
+    }
+    try{ teExpenses = await teListApi(filterCode, filterName); if(!Array.isArray(teExpenses)) teExpenses = []; }
     catch(e){ teExpenses = []; }
     teRenderGrid();
   }
@@ -2174,7 +2215,7 @@
           return;
         }
       }
-      const empIdx = TE_EMPLOYEES.findIndex(x=>x.name===t.employeeName);
+      const empIdx = teEmpList.findIndex(x=>x.name===t.employeeName);
       document.getElementById('teEmployee').selectedIndex = empIdx>=0 ? empIdx : 0;
       document.getElementById('teDate').value = t.travelDate || '';
       document.getElementById('teJobNo').value = t.jobNo || '';
@@ -2227,7 +2268,7 @@
   document.getElementById('teSortSelect').addEventListener('change', teRenderGrid);
 
   function teBuildExpenseObject(){
-    const emp = teGetEmp_(TE_EMPLOYEES[document.getElementById('teEmployee').value] || TE_EMPLOYEES[0]);
+    const emp = teEmpList[document.getElementById('teEmployee').value] || teEmpList[0];
     const c = teCompute();
     const expense = {
       id: teCurrentId,
@@ -2453,7 +2494,7 @@
 
   // ---------- PDF export ----------
   function tePopulatePrintPage(){
-    const emp = TE_EMPLOYEES[document.getElementById('teEmployee').value] || TE_EMPLOYEES[0];
+    const emp = teEmpList[document.getElementById('teEmployee').value] || teEmpList[0];
     const c = teCompute();
     const dateVal = document.getElementById('teDate').value || todayISO();
 
