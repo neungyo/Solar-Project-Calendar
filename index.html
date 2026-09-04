@@ -157,19 +157,19 @@
   #tePrintPage .tep-footer div{ color:#000; font-size:7.6px; line-height:1.45; }
 
   /* Print preview modal */
-  #tePreviewOverlay{ position:fixed; inset:0; background:rgba(20,30,50,.6); display:none; align-items:flex-start; justify-content:center; z-index:80; overflow:auto; padding:30px 16px; }
-  #tePreviewOverlay.show{ display:flex; }
+  #tePreviewOverlay, #plPreviewOverlay{ position:fixed; inset:0; background:rgba(20,30,50,.6); display:none; align-items:flex-start; justify-content:center; z-index:80; overflow:auto; padding:30px 16px; }
+  #tePreviewOverlay.show, #plPreviewOverlay.show{ display:flex; }
   .te-preview-box{ background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.35); }
   .te-preview-toolbar{ display:flex; justify-content:flex-end; gap:8px; padding:10px 14px; background:#F3F5F9; border-bottom:1px solid var(--line); }
   .te-preview-frame{ padding:16px; background:#DADEE5; display:flex; flex-direction:column; align-items:center; gap:24px; }
   .te-preview-sheet{ box-shadow:0 6px 22px rgba(0,0,0,.28); }
   @media print{
     body *{ visibility:hidden; }
-    #tePreviewFrame, #tePreviewFrame *{ visibility:visible; }
-    #tePreviewOverlay{ position:absolute; inset:auto; background:#fff; padding:0; display:block; }
+    #tePreviewFrame, #tePreviewFrame *, #plPreviewFrame, #plPreviewFrame *{ visibility:visible; }
+    #tePreviewOverlay, #plPreviewOverlay{ position:absolute; inset:auto; background:#fff; padding:0; display:block; }
     .te-preview-box{ box-shadow:none; border-radius:0; }
     .te-preview-toolbar{ display:none; }
-    #tePreviewFrame{ padding:0; background:#fff; gap:0; }
+    #tePreviewFrame, #plPreviewFrame{ padding:0; background:#fff; gap:0; }
     .te-preview-sheet{ box-shadow:none; page-break-after:always; }
     .te-preview-sheet:last-child{ page-break-after:auto; }
   }
@@ -205,6 +205,43 @@
   .terp-landscape-col{ display:flex; flex-direction:column; gap:14px; align-items:center; justify-content:center; height:100%; }
   .terp-box{ flex:0 0 auto; border:1px solid #000; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .terp-box img{ width:100%; height:100%; object-fit:contain; }
+
+  /* Punch List Report print templates */
+  #plPrintCoverRoot, #plPrintItemsRoot{ position:fixed; left:-9999px; top:0; }
+  #plPrintCoverPage{ width:794px; height:1123px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; box-sizing:border-box; border:1.4px solid #000; display:flex; flex-direction:column; overflow:hidden; }
+  .plc-topbox{ display:flex; border-bottom:1.4px solid #000; flex:0 0 auto; }
+  .plc-topleft{ flex:1; border-right:1.4px solid #000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; text-align:center; }
+  .plc-topright{ width:220px; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .plc-title{ font-size:15px; font-weight:700; color:#1440A0; }
+  .plc-subtitle{ font-size:12px; color:#1440A0; margin-top:4px; }
+  .plc-logo{ height:34px; width:auto; }
+  .plc-bar{ box-sizing:border-box; background:#000; color:#fff; font-weight:700; font-size:15px; text-align:center; display:flex; align-items:center; justify-content:center; border-bottom:1.4px solid #000; flex:0 0 34px; padding:4px 10px; }
+  .plc-bar-xl{ flex:0 0 96px; font-size:20px; flex-direction:column; gap:4px; }
+  .plc-value{ box-sizing:border-box; background:#fff; color:#000; font-size:14px; text-align:center; display:flex; align-items:center; justify-content:center; border-bottom:1.4px solid #000; flex:0 0 42px; padding:4px 14px; line-height:1.5; }
+  .plc-spacer{ flex:1 1 auto; }
+  .plc-grow{ flex:1 1 auto; }
+  .plc-row2{ display:flex; flex:0 0 auto; }
+  .plc-row2.plc-grow{ flex:1 1 auto; }
+  .plc-row2 .plc-half{ flex:1; border-bottom:none; }
+  .plc-row2 .plc-half:first-child{ border-right:1.4px solid #000; }
+  .plc-row2 .plc-bar.plc-half, .plc-row2 .plc-value.plc-half{ border-bottom:1.4px solid #000; }
+  .plc-sign-slot{ display:inline-block; width:260px; text-align:center; }
+  .plc-sign-slot-line{ border-bottom:1.4px solid #000; }
+  #plPrintCoverPage > *:last-child{ border-bottom:none; }
+
+  #plPrintItemsPage{ width:794px; height:1123px; background:#fff; font-family:Tahoma,'Noto Sans Thai',sans-serif; color:#000; padding:26px 30px; box-sizing:border-box; position:relative; overflow:hidden; }
+  .pli-print-title{ font-size:13px; font-weight:700; margin-bottom:6px; }
+  .pli-print-meta{ width:100%; font-size:10.3px; border-collapse:collapse; margin-bottom:10px; }
+  .pli-print-meta td{ padding:1px 6px 1px 0; }
+  .pli-print-card{ border:1px solid #999; border-radius:4px; padding:8px 12px; margin-bottom:10px; }
+  .pli-print-top{ display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px; }
+  .pli-print-desc{ font-size:10.3px; line-height:1.4; margin-bottom:6px; }
+  .pli-print-photos{ display:flex; gap:10px; margin-bottom:5px; }
+  .pli-print-photo{ flex:1; height:150px; border:1px solid #ccc; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#F4F5F7; }
+  .pli-print-photo img{ width:100%; height:100%; object-fit:contain; }
+  .pli-print-photo-cap{ font-size:9px; color:#666; text-align:center; margin-top:2px; }
+  .pli-print-meta2{ font-size:9.5px; color:#333; display:flex; gap:16px; flex-wrap:wrap; }
+  .pli-print-pagenum{ position:absolute; bottom:12px; right:32px; font-size:9px; color:#888; }
 
   /* ---- Level 2 sub-tabs (new: nested under Project) ---- */
   .l2-wrap{
@@ -335,6 +372,39 @@
 
   .action-row{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
 
+  /* ---- Punch List Report ---- */
+  .sr-subtabs{ display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+  .sr-subtab{ font-size:12.5px; font-weight:700; color:var(--muted); background:none; border:none; padding:9px 16px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .sr-subtab.active{ color:var(--blue); border-bottom-color:var(--blue); }
+  .pl-head-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  .pl-hist-item{ border:1px solid var(--line); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .pl-hist-title{ font-size:13px; font-weight:700; color:#1D2433; margin:0 0 3px; }
+  .pl-hist-meta{ font-size:11px; color:var(--muted); }
+  .pl-badge{ font-size:10.5px; font-weight:700; padding:3px 10px; border-radius:12px; }
+  .pl-badge-warn{ background:#FDECEC; color:#B3261E; }
+  .pl-badge-ok{ background:#E7F6EC; color:#1E7B3C; }
+  .pl-grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
+  .pl-grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px 16px; }
+  .pl-field label{ display:block; font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:700; }
+  .pl-field input, .pl-field textarea{ width:100%; border:1px solid var(--line); border-radius:8px; padding:8px 9px; font-size:12.5px; font-family:inherit; }
+  .pl-field textarea{ min-height:60px; resize:vertical; }
+  .pli-card{ border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:14px; background:#FBFCFD; }
+  .pli-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap; }
+  .pli-num{ font-size:12.5px; font-weight:700; color:var(--blue); }
+  .pli-resolved{ display:flex; align-items:center; gap:5px; font-size:11.5px; color:#1E7B3C; font-weight:700; }
+  .pli-resolved input{ width:auto; }
+  .pli-del{ font-size:11px; padding:5px 10px; border-radius:6px; border:1px solid #F0B8B8; background:#fff; color:var(--red); font-weight:700; }
+  .pli-photo-slot{ }
+  .pli-photo-box{ position:relative; aspect-ratio:4/3; border:1.4px dashed #A9B1BE; border-radius:8px; background:#F4F5F7; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
+  .pli-photo-box:hover{ border-color:var(--blue); background:#EEF2F8; }
+  .pli-photo-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pli-photo-box .plus{ display:flex; flex-direction:column; align-items:center; gap:3px; color:#8993A3; font-size:10px; }
+  .pli-photo-box .remove{ position:absolute; top:3px; right:3px; width:18px;height:18px;border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:11px; display:flex;align-items:center;justify-content:center; z-index:2; }
+  .pli-photo-label{ font-size:10.5px; color:var(--muted); margin-top:4px; text-align:center; font-weight:700; }
+  .pl-add-item-btn{ font-size:12px; color:var(--blue); background:none; border:1px dashed var(--line); border-radius:7px; padding:8px 14px; margin-bottom:16px; font-weight:700; }
+  .pl-empty{ text-align:center; color:var(--muted); font-size:12.5px; padding:24px 0; }
+  @media (max-width:700px){ .pl-grid2, .pl-grid3{ grid-template-columns:1fr; } }
+
   /* Modal */
   #modalOverlay, #settingsOverlay, #teChangePwOverlay, #teUsersOverlay{ position:fixed; inset:0; background:rgba(20,30,50,.5); display:none; align-items:center; justify-content:center; z-index:50; padding:20px; }
   #modalOverlay.show, #settingsOverlay.show, #teChangePwOverlay.show, #teUsersOverlay.show{ display:flex; }
@@ -461,6 +531,12 @@
           </div>
         </div>
 
+        <div class="sr-subtabs" id="srSubTabs">
+          <button type="button" class="sr-subtab active" data-subtab="daily">รายงานประจำวัน</button>
+          <button type="button" class="sr-subtab" data-subtab="punch">Punch List</button>
+        </div>
+
+        <div id="srDailyPane">
         <div class="card" id="dueCard">
           <h3>กำหนดส่งงาน</h3>
           <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -503,6 +579,9 @@
           <h3>ประวัติรายงานทั้งหมด</h3>
           <div class="hist-list" id="historyList"></div>
         </div>
+        </div>
+
+        <div id="srPunchPane" style="display:none;"></div>
       </div>
     </div>
 
@@ -760,6 +839,91 @@
     </div>
   </div>
 
+  <!-- Hidden print template for Punch List Report — cover page (page 1),
+       modeled on the official "หน้าปกเอกสาร" Excel sheet -->
+  <div id="plPrintCoverRoot">
+    <div id="plPrintCoverPage">
+      <div class="plc-topbox">
+        <div class="plc-topleft">
+          <div class="plc-title">Punch List Report Solar Rooftop</div>
+          <div class="plc-subtitle">รายงานแก้ไขปัญหา ก่อนตรวจรับงานระบบพลังงานแสงอาทิตย์</div>
+        </div>
+        <div class="plc-topright"><img class="plc-logo" id="plCoverLogo" src=""></div>
+      </div>
+
+      <div class="plc-bar plc-bar-xl">
+        <div>Synnex (Thailand)</div>
+        <div>Public Company Limited</div>
+      </div>
+
+      <div class="plc-bar">Punch List Report Solar Rooftop</div>
+
+      <div class="plc-bar">Site Name</div>
+      <div class="plc-value" id="plcSiteName">—</div>
+
+      <div class="plc-value plc-spacer">&nbsp;</div>
+
+      <div class="plc-bar">Project</div>
+      <div class="plc-value" id="plcProject">—</div>
+
+      <div class="plc-bar">Report by</div>
+      <div class="plc-value plc-grow" id="plcReportBy">—</div>
+
+      <div class="plc-row2">
+        <div class="plc-bar plc-half">Checked by</div>
+        <div class="plc-bar plc-half">Approved by</div>
+      </div>
+      <div class="plc-row2">
+        <div class="plc-value plc-half" id="plcCheckedCo">—</div>
+        <div class="plc-value plc-half">Synnex (Thailand)<br>Public Company Limited</div>
+      </div>
+      <div class="plc-row2 plc-grow">
+        <div class="plc-value plc-half">&nbsp;</div>
+        <div class="plc-value plc-half">&nbsp;</div>
+      </div>
+      <div class="plc-row2">
+        <div class="plc-value plc-half"><span class="plc-sign-slot plc-sign-slot-line">&nbsp;</span></div>
+        <div class="plc-value plc-half"><span class="plc-sign-slot plc-sign-slot-line">&nbsp;</span></div>
+      </div>
+      <div class="plc-row2">
+        <div class="plc-value plc-half">(&nbsp;<span class="plc-sign-slot" id="plcCheckedName">&nbsp;</span>&nbsp;)</div>
+        <div class="plc-value plc-half">(&nbsp;<span class="plc-sign-slot" id="plcApprovedName">&nbsp;</span>&nbsp;)</div>
+      </div>
+      <div class="plc-row2">
+        <div class="plc-value plc-half">………. / ………. / ……….</div>
+        <div class="plc-value plc-half">………. / ………. / ……….</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden print template for Punch List Report — defect item pages (page 2+),
+       2 items per page, populated dynamically per batch -->
+  <div id="plPrintItemsRoot">
+    <div id="plPrintItemsPage">
+      <div class="pli-print-head">
+        <div class="pli-print-title">ตารางรายการข้อบกพร่องระบบผลิตไฟฟ้าพลังงานแสงอาทิตย์บนหลังคา (Solar Rooftop System)</div>
+        <table class="pli-print-meta">
+          <tr>
+            <td><b>โครงการ:</b> <span id="plpProject">—</span></td>
+            <td><b>วันที่ตรวจสอบ:</b> <span id="plpDate">—</span></td>
+            <td><b>TS JOB:</b> <span id="plpJobNo">—</span></td>
+          </tr>
+          <tr>
+            <td><b>ผู้ติดต่อ:</b> <span id="plpContact">—</span></td>
+            <td><b>สถานที่:</b> <span id="plpLocation">—</span></td>
+            <td><b>เวลา:</b> <span id="plpTime">—</span></td>
+          </tr>
+          <tr>
+            <td colspan="2"><b>ผู้ดำเนินงาน:</b> <span id="plpOperator">—</span></td>
+            <td><b>ผู้ตรวจสอบ:</b> <span id="plpInspector">—</span></td>
+          </tr>
+        </table>
+      </div>
+      <div id="plPrintItemsGrid"></div>
+      <div class="pli-print-pagenum">หน้า <span id="plPrintPageNum">2</span></div>
+    </div>
+  </div>
+
   <!-- Click-to-enlarge lightbox for evidence photos / receipt thumbnails -->
   <div id="tePhotoLightbox">
     <div id="tePhotoLightboxClose">✕</div>
@@ -789,6 +953,17 @@
         <button class="btn btn-blue" id="tePreviewPrintBtn">🖶 สั่งพิมพ์</button>
       </div>
       <div class="te-preview-frame" id="tePreviewFrame"></div>
+    </div>
+  </div>
+
+  <!-- Print preview modal for Punch List Report -->
+  <div id="plPreviewOverlay">
+    <div class="te-preview-box">
+      <div class="te-preview-toolbar">
+        <button class="btn btn-outline" id="plPreviewCloseBtn">ปิด</button>
+        <button class="btn btn-blue" id="plPreviewPrintBtn">🖶 สั่งพิมพ์</button>
+      </div>
+      <div class="te-preview-frame" id="plPreviewFrame"></div>
     </div>
   </div>
 
@@ -1121,6 +1296,15 @@
     document.getElementById('vDueDateInput').value = s.dueDate || '';
     const dInfoInit = dueInfo(s);
     document.getElementById('dueTagDetail').innerHTML = `<span class="due-tag ${dInfoInit.cls}">${dInfoInit.label}</span>`;
+    // Reset the sub-tab to "รายงานประจำวัน" whenever a site is (re)opened, so a
+    // Punch List document left open on a previous site never lingers on screen.
+    document.querySelectorAll('#srSubTabs .sr-subtab').forEach(b=>b.classList.toggle('active', b.dataset.subtab==='daily'));
+    document.getElementById('srDailyPane').style.display = '';
+    document.getElementById('srPunchPane').style.display = 'none';
+    if(plPaneBuilt){
+      document.getElementById('plListView').style.display = '';
+      document.getElementById('plDetailView').style.display = 'none';
+    }
     await refreshHistory();
     await loadIntoForm();
   }
@@ -1528,6 +1712,513 @@
     }catch(e){
       showSetupGate();
       setNote('error', '⚠️ <b>เชื่อมต่อไม่สำเร็จ:</b> ' + escapeHtml(e.message) + ' — ตรวจสอบ URL หรือการตั้งค่าการเข้าถึงของ Apps Script แล้วลองใหม่');
+    }
+  }
+
+
+
+  // ================= PUNCH LIST REPORT (Solar Rooftop) =================
+  let plDocs = [];
+  let plCurrentId = null;
+  let plItems = [];
+  let plPhotoChanged = new Set();
+  let plPaneBuilt = false;
+
+  function plUid(){ return 'pl'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  async function plListApi(siteId){ return await apiGet({ action:'listPunchLists', siteId }); }
+  async function plGetApi(id){ return await apiGet({ action:'getPunchList', id }); }
+  async function plSaveApi(doc){ return await apiPost({ action:'savePunchList', doc }); }
+  async function plDeleteApi(id){ return await apiPost({ action:'deletePunchList', id }); }
+
+  function plNewItem(){
+    return { itemId: plUid(), area:'', description:'', photoBefore:'', photoAfter:'', fixDate:'', operator:'', reference:'', remark:'', resolved:false };
+  }
+
+  document.querySelectorAll('#srSubTabs .sr-subtab').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      document.querySelectorAll('#srSubTabs .sr-subtab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const isPunch = btn.dataset.subtab === 'punch';
+      document.getElementById('srDailyPane').style.display = isPunch ? 'none' : '';
+      document.getElementById('srPunchPane').style.display = isPunch ? '' : 'none';
+      if(isPunch){
+        plEnsurePaneBuilt();
+        await plShowList();
+      }
+    });
+  });
+
+  function plEnsurePaneBuilt(){
+    if(plPaneBuilt) return;
+    plPaneBuilt = true;
+    document.getElementById('srPunchPane').innerHTML = `
+      <div id="plListView">
+        <div class="pl-head-row">
+          <div class="hint-small" style="font-size:12px;">Punch List Report — บันทึกรายการข้อบกพร่องก่อนตรวจรับงาน แนบรูปก่อน/หลังแก้ไขได้ พร้อมออกรายงาน PDF</div>
+          <button type="button" class="btn btn-blue" id="plNewBtn">+ สร้างเอกสารใหม่</button>
+        </div>
+        <div id="plHistList"></div>
+      </div>
+
+      <div id="plDetailView" style="display:none;">
+        <button type="button" class="back-link" id="plBackBtn">← กลับไปหน้ารายการ Punch List</button>
+
+        <div class="card">
+          <h3>ข้อมูลการตรวจสอบ</h3>
+          <div class="pl-grid3" style="margin-bottom:12px;">
+            <div class="pl-field"><label>ชื่อรอบตรวจ (ถ้ามี)</label><input type="text" id="plRoundLabel" placeholder="เช่น ตรวจรับงาน ครั้งที่ 1"></div>
+            <div class="pl-field"><label>วันที่ตรวจสอบ</label><input type="date" id="plInspectDate"></div>
+            <div class="pl-field"><label>เวลา</label><input type="time" id="plInspectTime"></div>
+          </div>
+          <div class="pl-grid3" style="margin-bottom:12px;">
+            <div class="pl-field"><label>TS JOB</label><input type="text" id="plJobNo" placeholder="เช่น TS260900123"></div>
+            <div class="pl-field"><label>ผู้ติดต่อ</label><input type="text" id="plContactPerson"></div>
+            <div class="pl-field"><label>สถานที่</label><input type="text" id="plLocation"></div>
+          </div>
+          <div class="pl-grid2">
+            <div class="pl-field"><label>ผู้ดำเนินงาน (ผู้รับเหมา)</label><input type="text" id="plOperatorCompany"></div>
+            <div class="pl-field"><label>ผู้ตรวจสอบ</label><input type="text" id="plInspectorCompany"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>ข้อมูลหน้าปกเอกสาร</h3>
+          <div class="pl-field" style="margin-bottom:12px;"><label>Project (รายละเอียดโครงการสำหรับหน้าปก)</label><input type="text" id="plProjectDesc" placeholder="เช่น งานติดตั้ง Solar Rooftop 30kW"></div>
+          <div class="pl-grid3">
+            <div class="pl-field"><label>Report by</label><input type="text" id="plReportByCompany"></div>
+            <div class="pl-field"><label>Checked by (ชื่อผู้เซ็น)</label><input type="text" id="plCheckedByName"></div>
+            <div class="pl-field"><label>Approved by (ชื่อผู้เซ็น)</label><input type="text" id="plApprovedByName"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>รายการข้อบกพร่อง</h3>
+          <div id="plItemsWrap"></div>
+          <button type="button" class="pl-add-item-btn" id="plAddItemBtn">+ เพิ่มรายการ</button>
+        </div>
+
+        <div class="action-row">
+          <button type="button" class="btn btn-outline" id="plDeleteBtn" style="margin-right:auto; color:var(--red); border-color:#F0B8B8;">ลบเอกสาร</button>
+          <button type="button" class="btn btn-outline" id="plPreviewBtn">ดูตัวอย่าง</button>
+          <button type="button" class="btn btn-outline" id="plSaveBtn">บันทึก</button>
+          <button type="button" class="btn btn-blue" id="plExportBtn">ดาวน์โหลดเป็น PDF</button>
+        </div>
+      </div>
+    `;
+    plWireDetailEvents();
+  }
+
+  async function plShowList(){
+    document.getElementById('plListView').style.display = '';
+    document.getElementById('plDetailView').style.display = 'none';
+    const listEl = document.getElementById('plHistList');
+    listEl.innerHTML = '<div class="pl-empty">กำลังโหลด...</div>';
+    try{
+      plDocs = await plListApi(currentSiteId);
+      if(!Array.isArray(plDocs)) plDocs = [];
+    }catch(e){ listEl.innerHTML = `<div class="pl-empty">โหลดรายการไม่สำเร็จ: ${escapeHtml(e.message)}</div>`; return; }
+    if(plDocs.length===0){
+      listEl.innerHTML = '<div class="pl-empty">ยังไม่มีเอกสาร Punch List สำหรับไซต์นี้ — กด "+ สร้างเอกสารใหม่" เพื่อเริ่มบันทึก</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    plDocs.forEach(d=>{
+      const row = document.createElement('div');
+      row.className = 'pl-hist-item';
+      const label = d.roundLabel || ('ตรวจสอบวันที่ ' + (d.inspectDate ? toThaiDate(d.inspectDate) : '-'));
+      const badge = d.unresolvedCount>0
+        ? `<span class="pl-badge pl-badge-warn">ค้างแก้ไข ${d.unresolvedCount}</span>`
+        : `<span class="pl-badge pl-badge-ok">แก้ไขครบแล้ว</span>`;
+      row.innerHTML = `
+        <div>
+          <div class="pl-hist-title">${escapeHtml(label)}</div>
+          <div class="pl-hist-meta">${d.inspectDate ? toThaiDate(d.inspectDate) : '-'} · ${d.itemCount||0} รายการ</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${badge}
+          <button type="button" data-action="edit" style="font-size:11px; padding:5px 10px; border-radius:6px; border:1px solid var(--line); background:#fff; font-weight:700; color:var(--blue);">แก้ไข</button>
+          <button type="button" data-action="delete" style="font-size:11px; padding:5px 10px; border-radius:6px; border:1px solid #F0B8B8; background:#fff; font-weight:700; color:var(--red);">ลบ</button>
+        </div>`;
+      row.querySelector('[data-action="edit"]').addEventListener('click', ()=> plOpen(d.id));
+      row.querySelector('[data-action="delete"]').addEventListener('click', async ()=>{
+        if(!confirm('ยืนยันลบเอกสาร Punch List นี้? การลบไม่สามารถกู้คืนได้')) return;
+        try{ await plDeleteApi(d.id); await plShowList(); }catch(e){ alert('ลบไม่สำเร็จ: '+e.message); }
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  async function plOpen(id){
+    plCurrentId = id || plUid();
+    plPhotoChanged = new Set();
+    document.getElementById('plListView').style.display = 'none';
+    document.getElementById('plDetailView').style.display = '';
+    if(id){
+      let d = null;
+      try{ d = await plGetApi(id); }catch(e){ alert('โหลดเอกสารไม่สำเร็จ: '+e.message); return; }
+      if(!d){ alert('ไม่พบเอกสารนี้'); return; }
+      document.getElementById('plRoundLabel').value = d.roundLabel || '';
+      document.getElementById('plInspectDate').value = d.inspectDate || '';
+      document.getElementById('plInspectTime').value = d.inspectTime || '';
+      document.getElementById('plJobNo').value = d.jobNo || '';
+      document.getElementById('plContactPerson').value = d.contactPerson || '';
+      document.getElementById('plLocation').value = d.location || '';
+      document.getElementById('plOperatorCompany').value = d.operatorCompany || '';
+      document.getElementById('plInspectorCompany').value = d.inspectorCompany || '';
+      document.getElementById('plProjectDesc').value = d.projectDesc || '';
+      document.getElementById('plReportByCompany').value = d.reportByCompany || '';
+      document.getElementById('plCheckedByName').value = d.checkedByName || '';
+      document.getElementById('plApprovedByName').value = d.approvedByName || '';
+      plItems = Array.isArray(d.items) ? d.items : [];
+      document.getElementById('plDeleteBtn').style.display = '';
+    } else {
+      const s = sites.find(x=>x.id===currentSiteId);
+      document.getElementById('plRoundLabel').value = '';
+      document.getElementById('plInspectDate').value = todayISO();
+      document.getElementById('plInspectTime').value = '';
+      document.getElementById('plJobNo').value = '';
+      document.getElementById('plContactPerson').value = '';
+      document.getElementById('plLocation').value = '';
+      document.getElementById('plOperatorCompany').value = '';
+      document.getElementById('plInspectorCompany').value = 'บริษัท ซินเน็ค (ประเทศไทย) จำกัด (มหาชน)';
+      document.getElementById('plProjectDesc').value = s ? s.name : '';
+      document.getElementById('plReportByCompany').value = '';
+      document.getElementById('plCheckedByName').value = '';
+      document.getElementById('plApprovedByName').value = '';
+      plItems = [];
+      document.getElementById('plDeleteBtn').style.display = 'none';
+    }
+    if(plItems.length===0) plItems.push(plNewItem());
+    plRenderItems();
+  }
+
+  function plRenderItems(){
+    const wrap = document.getElementById('plItemsWrap');
+    if(plItems.length===0){ wrap.innerHTML = '<div class="pl-empty">ยังไม่มีรายการ กด "+ เพิ่มรายการ" เพื่อเริ่มบันทึกจุดบกพร่อง</div>'; return; }
+    wrap.innerHTML = '';
+    plItems.forEach((it,idx)=>{
+      const card = document.createElement('div');
+      card.className = 'pli-card';
+      card.dataset.idx = idx;
+      card.innerHTML = `
+        <div class="pli-top">
+          <span class="pli-num">รายการที่ ${idx+1}</span>
+          <label class="pli-resolved"><input type="checkbox" data-field="resolved" ${it.resolved?'checked':''}> แก้ไขแล้ว</label>
+          <button type="button" class="pli-del" data-action="delete-item">ลบรายการ</button>
+        </div>
+        <div class="pl-grid2" style="margin-bottom:10px;">
+          <div class="pl-field"><label>บริเวณจุดบกพร่อง</label><input type="text" data-field="area" value="${escapeHtml(it.area||'')}" placeholder="เช่น INVERTER STATION"></div>
+          <div class="pl-field"><label>Reference</label><input type="text" data-field="reference" value="${escapeHtml(it.reference||'')}"></div>
+        </div>
+        <div class="pl-field" style="margin-bottom:10px;"><label>รายการข้อบกพร่อง</label><textarea data-field="description" placeholder="อธิบายจุดบกพร่องที่พบ">${escapeHtml(it.description||'')}</textarea></div>
+        <div class="pl-grid2" style="margin-bottom:10px;">
+          <div class="pli-photo-slot">
+            <div class="pli-photo-box" data-slot="photoBefore">${it.photoBefore ? `<img src="${it.photoBefore}"><span class="remove" data-remove="photoBefore">✕</span>` : `<div class="plus"><div style="font-size:20px;">+</div>เพิ่มรูป</div>`}</div>
+            <input type="file" accept="image/*" data-file="photoBefore" hidden>
+            <div class="pli-photo-label">รูปก่อนแก้ไข (Before)</div>
+          </div>
+          <div class="pli-photo-slot">
+            <div class="pli-photo-box" data-slot="photoAfter">${it.photoAfter ? `<img src="${it.photoAfter}"><span class="remove" data-remove="photoAfter">✕</span>` : `<div class="plus"><div style="font-size:20px;">+</div>เพิ่มรูป</div>`}</div>
+            <input type="file" accept="image/*" data-file="photoAfter" hidden>
+            <div class="pli-photo-label">รูปหลังแก้ไข (After)</div>
+          </div>
+        </div>
+        <div class="pl-grid3">
+          <div class="pl-field"><label>วันที่แก้ไข</label><input type="date" data-field="fixDate" value="${it.fixDate||''}"></div>
+          <div class="pl-field"><label>ผู้ดำเนินงาน</label><input type="text" data-field="operator" value="${escapeHtml(it.operator||'')}"></div>
+          <div class="pl-field"><label>หมายเหตุ</label><input type="text" data-field="remark" value="${escapeHtml(it.remark||'')}"></div>
+        </div>
+      `;
+      wrap.appendChild(card);
+    });
+  }
+
+  function plWireDetailEvents(){
+    document.getElementById('plNewBtn').addEventListener('click', ()=> plOpen(null));
+    document.getElementById('plBackBtn').addEventListener('click', async ()=>{
+      document.getElementById('plDetailView').style.display = 'none';
+      document.getElementById('plListView').style.display = '';
+      await plShowList();
+    });
+    document.getElementById('plAddItemBtn').addEventListener('click', ()=>{
+      plItems.push(plNewItem());
+      plRenderItems();
+    });
+
+    const wrap = document.getElementById('plItemsWrap');
+    wrap.addEventListener('input', ev=>{
+      const card = ev.target.closest('.pli-card'); if(!card) return;
+      const idx = Number(card.dataset.idx);
+      const field = ev.target.dataset.field;
+      if(!field || field==='resolved') return;
+      plItems[idx][field] = ev.target.value;
+    });
+    wrap.addEventListener('change', async ev=>{
+      const card = ev.target.closest('.pli-card'); if(!card) return;
+      const idx = Number(card.dataset.idx);
+      if(ev.target.dataset.field === 'resolved'){ plItems[idx].resolved = ev.target.checked; return; }
+      if(ev.target.dataset.file){
+        const slot = ev.target.dataset.file;
+        const file = ev.target.files[0]; if(!file) return;
+        const dataUrl = await teCompressImage(file, 1400, .82);
+        plItems[idx][slot] = dataUrl;
+        plPhotoChanged.add(plItems[idx].itemId + '|' + slot);
+        plRenderItems();
+      }
+    });
+    wrap.addEventListener('click', ev=>{
+      const card = ev.target.closest('.pli-card'); if(!card) return;
+      const idx = Number(card.dataset.idx);
+      if(ev.target.closest('[data-action="delete-item"]')){
+        plItems.splice(idx,1);
+        plRenderItems();
+        return;
+      }
+      const removeBtn = ev.target.closest('[data-remove]');
+      if(removeBtn){
+        const slot = removeBtn.dataset.remove;
+        plItems[idx][slot] = '';
+        plPhotoChanged.add(plItems[idx].itemId + '|' + slot);
+        plRenderItems();
+        return;
+      }
+      const box = ev.target.closest('.pli-photo-box');
+      if(box){
+        const slot = box.dataset.slot;
+        card.querySelector(`input[type=file][data-file="${slot}"]`).click();
+        return;
+      }
+      if(ev.target.tagName === 'IMG'){
+        teOpenLightbox(ev.target.getAttribute('src'));
+      }
+    });
+
+    document.getElementById('plSaveBtn').addEventListener('click', async ()=>{
+      const btn = document.getElementById('plSaveBtn'); const original = btn.textContent;
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      try{
+        const doc = plBuildDocObject();
+        await plSaveApi(doc);
+        plCurrentId = doc.id;
+        alert('บันทึกเอกสาร Punch List เรียบร้อยแล้ว');
+        await plOpen(plCurrentId);
+      }catch(e){ alert('บันทึกไม่สำเร็จ: ' + e.message); }
+      finally{ btn.disabled = false; btn.textContent = original; }
+    });
+
+    document.getElementById('plDeleteBtn').addEventListener('click', async ()=>{
+      if(!plCurrentId) return;
+      if(!confirm('ยืนยันลบเอกสาร Punch List นี้? การลบไม่สามารถกู้คืนได้')) return;
+      const btn = document.getElementById('plDeleteBtn'); btn.disabled = true;
+      try{
+        await plDeleteApi(plCurrentId);
+        document.getElementById('plDetailView').style.display = 'none';
+        document.getElementById('plListView').style.display = '';
+        await plShowList();
+      }catch(e){ alert('ลบไม่สำเร็จ: ' + e.message); }
+      finally{ btn.disabled = false; }
+    });
+
+    document.getElementById('plExportBtn').addEventListener('click', plExportPdf);
+    document.getElementById('plPreviewBtn').addEventListener('click', plShowPreview);
+    document.getElementById('plPreviewCloseBtn').addEventListener('click', ()=>{
+      document.getElementById('plPreviewFrame').innerHTML = '';
+      document.getElementById('plPreviewOverlay').classList.remove('show');
+    });
+    document.getElementById('plPreviewPrintBtn').addEventListener('click', ()=>{ window.print(); });
+  }
+
+  function plBuildDocObject(){
+    const items = plItems.map(it=>{
+      const out = Object.assign({}, it);
+      ['photoBefore','photoAfter'].forEach(slot=>{
+        const changed = plPhotoChanged.has(it.itemId + '|' + slot);
+        if(!changed) out[slot] = 'KEEP';
+      });
+      return out;
+    });
+    return {
+      id: plCurrentId,
+      siteId: currentSiteId,
+      roundLabel: document.getElementById('plRoundLabel').value.trim(),
+      inspectDate: document.getElementById('plInspectDate').value || todayISO(),
+      inspectTime: document.getElementById('plInspectTime').value,
+      jobNo: document.getElementById('plJobNo').value.trim(),
+      contactPerson: document.getElementById('plContactPerson').value.trim(),
+      location: document.getElementById('plLocation').value.trim(),
+      operatorCompany: document.getElementById('plOperatorCompany').value.trim(),
+      inspectorCompany: document.getElementById('plInspectorCompany').value.trim(),
+      projectDesc: document.getElementById('plProjectDesc').value.trim(),
+      reportByCompany: document.getElementById('plReportByCompany').value.trim(),
+      checkedByName: document.getElementById('plCheckedByName').value.trim(),
+      approvedByName: document.getElementById('plApprovedByName').value.trim(),
+      items
+    };
+  }
+
+  // ---------- PDF export / preview ----------
+  function plClassifyPages(items){
+    const pages = [];
+    for(let i=0;i<items.length;i+=4) pages.push(items.slice(i,i+4));
+    return pages;
+  }
+
+  function plPopulateCoverPage(doc){
+    const s = sites.find(x=>x.id===currentSiteId);
+    const logoSrc = document.querySelector('.pp-mark') ? document.querySelector('.pp-mark').src : '';
+    document.getElementById('plCoverLogo').src = logoSrc;
+    document.getElementById('plcSiteName').textContent = s ? s.name : '-';
+    document.getElementById('plcProject').textContent = doc.projectDesc || (s ? s.name : '-');
+    document.getElementById('plcReportBy').textContent = doc.reportByCompany || '-';
+    document.getElementById('plcCheckedCo').textContent = doc.operatorCompany || doc.reportByCompany || '-';
+    document.getElementById('plcCheckedName').textContent = doc.checkedByName || ' ';
+    document.getElementById('plcApprovedName').textContent = doc.approvedByName || ' ';
+  }
+
+  function plPopulateItemsPageHead(doc){
+    const s = sites.find(x=>x.id===currentSiteId);
+    document.getElementById('plpProject').textContent = doc.projectDesc || (s ? s.name : '-');
+    document.getElementById('plpDate').textContent = doc.inspectDate ? toThaiDate(doc.inspectDate) : '-';
+    document.getElementById('plpJobNo').textContent = doc.jobNo || '-';
+    document.getElementById('plpContact').textContent = doc.contactPerson || '-';
+    document.getElementById('plpLocation').textContent = doc.location || '-';
+    document.getElementById('plpTime').textContent = doc.inspectTime || '-';
+    document.getElementById('plpOperator').textContent = doc.operatorCompany || '-';
+    document.getElementById('plpInspector').textContent = doc.inspectorCompany || '-';
+  }
+
+  function plItemCardHtml(it, no){
+    const statusHtml = it.resolved
+      ? '<span style="color:#1E7B3C;">แก้ไขแล้ว</span>'
+      : '<span style="color:#B3261E;">ยังไม่แก้ไข</span>';
+    return `
+      <div class="pli-print-card">
+        <div class="pli-print-top">
+          <span>${no}. บริเวณจุดบกพร่อง: ${escapeHtml(it.area||'-')}</span>
+          ${statusHtml}
+        </div>
+        <div class="pli-print-desc">รายการข้อบกพร่อง: ${escapeHtml(it.description||'-')}</div>
+        <div class="pli-print-photos">
+          <div>
+            <div class="pli-print-photo">${it.photoBefore ? `<img src="${it.photoBefore}">` : 'ไม่มีรูป'}</div>
+            <div class="pli-print-photo-cap">รูปก่อนแก้ไข (Before)</div>
+          </div>
+          <div>
+            <div class="pli-print-photo">${it.photoAfter ? `<img src="${it.photoAfter}">` : 'ไม่มีรูป'}</div>
+            <div class="pli-print-photo-cap">รูปหลังแก้ไข (After)</div>
+          </div>
+        </div>
+        <div class="pli-print-meta2">
+          <span><b>วันที่แก้ไข:</b> ${it.fixDate ? toThaiDate(it.fixDate) : '-'}</span>
+          <span><b>ผู้ดำเนินงาน:</b> ${escapeHtml(it.operator||'-')}</span>
+          <span><b>Reference:</b> ${escapeHtml(it.reference||'-')}</span>
+          <span><b>หมายเหตุ:</b> ${escapeHtml(it.remark||'-')}</span>
+        </div>
+      </div>`;
+  }
+
+  // html2canvas does not reliably honor CSS object-fit — it can stretch an
+  // <img> to fill its box instead of preserving aspect ratio. To avoid
+  // distorted before/after photos in the exported PDF, we measure each
+  // image's real dimensions and set explicit width/height (a manual
+  // "contain" fit) right before capturing, the same trick used elsewhere
+  // in this app for evidence photos.
+  async function plFitPhotosInPage(){
+    const boxes = document.querySelectorAll('#plPrintItemsGrid .pli-print-photo');
+    for(const box of boxes){
+      const img = box.querySelector('img');
+      if(!img) continue;
+      const dims = await teLoadImgDims(img.getAttribute('src'));
+      const boxW = box.clientWidth, boxH = box.clientHeight;
+      const scale = Math.min(boxW/dims.w, boxH/dims.h);
+      img.style.width = Math.max(1, Math.round(dims.w*scale)) + 'px';
+      img.style.height = Math.max(1, Math.round(dims.h*scale)) + 'px';
+    }
+  }
+
+  async function plRenderItemsPage(batch, startNo, pageNum, doc){
+    plPopulateItemsPageHead(doc);
+    document.getElementById('plPrintPageNum').textContent = pageNum;
+    document.getElementById('plPrintItemsGrid').innerHTML = batch.map((it,i)=> plItemCardHtml(it, startNo+i)).join('');
+    await plFitPhotosInPage();
+    const page = document.getElementById('plPrintItemsPage');
+    const canvas = await html2canvas(page, { scale:3, useCORS:true, backgroundColor:'#ffffff' });
+    return canvas;
+  }
+
+  async function plExportPdf(){
+    const btn = document.getElementById('plExportBtn'); const original = btn.textContent;
+    btn.textContent = 'กำลังสร้าง PDF...'; btn.disabled = true;
+    try{
+      const doc = plBuildDocObject();
+      plPopulateCoverPage(doc);
+      const coverCanvas = await html2canvas(document.getElementById('plPrintCoverPage'), { scale:3, useCORS:true, backgroundColor:'#ffffff' });
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','mm','a4');
+      const pageWidth=210, pageHeight=297;
+      const coverImgH = (coverCanvas.height*pageWidth)/coverCanvas.width;
+      pdf.addImage(coverCanvas.toDataURL('image/jpeg', .95),'JPEG',0,0,pageWidth,Math.min(coverImgH,pageHeight));
+
+      const pages = plClassifyPages(plItems);
+      let startNo = 1;
+      for(let p=0;p<pages.length;p++){
+        const canvas = await plRenderItemsPage(pages[p], startNo, p+2, doc);
+        const imgH = (canvas.height*pageWidth)/canvas.width;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg', .95),'JPEG',0,0,pageWidth,Math.min(imgH,pageHeight));
+        startNo += pages[p].length;
+      }
+
+      const s = sites.find(x=>x.id===currentSiteId);
+      const datePart = (doc.inspectDate||todayISO()).replace(/-/g,'');
+      const fileName = `${datePart}_PunchList_${slugify(s ? s.name : 'site')}`;
+      pdf.save(`${fileName}.pdf`);
+    }catch(e){ alert('เกิดข้อผิดพลาดในการสร้าง PDF: '+e.message); }
+    finally{ btn.textContent = original; btn.disabled = false; }
+  }
+
+  async function plBuildItemsPreviewSheet(batch, startNo, pageNum, doc){
+    plPopulateItemsPageHead(doc);
+    const clone = document.getElementById('plPrintItemsPage').cloneNode(true);
+    const grid = clone.querySelector('#plPrintItemsGrid');
+    grid.innerHTML = batch.map((it,i)=> plItemCardHtml(it, startNo+i)).join('');
+    const pn = clone.querySelector('#plPrintPageNum');
+    if(pn) pn.textContent = pageNum;
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(el=> el.removeAttribute('id'));
+    return clone;
+  }
+
+  async function plShowPreview(){
+    const btn = document.getElementById('plPreviewBtn'); const original = btn.textContent;
+    btn.textContent = 'กำลังเตรียมตัวอย่าง...'; btn.disabled = true;
+    try{
+      const doc = plBuildDocObject();
+      plPopulateCoverPage(doc);
+      const frame = document.getElementById('plPreviewFrame');
+      frame.innerHTML = '';
+
+      const coverSheet = document.createElement('div');
+      coverSheet.className = 'te-preview-sheet';
+      const coverClone = document.getElementById('plPrintCoverPage').cloneNode(true);
+      coverClone.removeAttribute('id');
+      coverClone.querySelectorAll('[id]').forEach(el=> el.removeAttribute('id'));
+      coverSheet.appendChild(coverClone);
+      frame.appendChild(coverSheet);
+
+      const pages = plClassifyPages(plItems);
+      let startNo = 1;
+      for(let p=0;p<pages.length;p++){
+        const sheet = await plBuildItemsPreviewSheet(pages[p], startNo, p+2, doc);
+        const wrap = document.createElement('div');
+        wrap.className = 'te-preview-sheet';
+        wrap.appendChild(sheet);
+        frame.appendChild(wrap);
+        startNo += pages[p].length;
+      }
+      document.getElementById('plPreviewOverlay').classList.add('show');
+    } finally {
+      btn.textContent = original; btn.disabled = false;
     }
   }
 
